@@ -9,6 +9,7 @@ SYMBOLS = [';', ':', ',', '[', ']', '(', ')', '{', '}', '+', '-', '*', '=', '<',
 WHITE_SPACES = [' ', '\n', '\r', '\t', '\v', '\f']
 current_char = None
 ready_char = None
+read_buffer = []
 line_number = 0
 
 
@@ -25,19 +26,25 @@ def read_next_char():
         ready_char = None
     if current_char == '\n':
         line_number += 1
+    read_buffer.append(current_char)
 
 def unread_last_char():
+    global current_char, line_number, ready_char
     if current_char == '\n':
         line_number -= 1
     ready_char = current_char
     current_char = None
-
+    if read_buffer:
+        del read_buffer[-1]
 
 def is_numeric(chr):
     return '0' <= chr <= '9'
 
 def is_letter(chr):
     return 'a' <= chr <= 'z' or 'A' <= chr <= 'Z'
+
+def is_numeric_letter(chr):
+    return is_letter(chr) or is_numeric(letter)
 
 def is_white_slash(chr):
     return chr in WHITE_SPACES or chr == '/'
@@ -53,20 +60,40 @@ def is_invalid_char(chr):
 # Token extraction
 
 def extract_number():
-    chr = read_next_char()
-    if not is_numeric(chr):
+    read_next_char()
+    if not is_numeric(current_char):
         unread_last_char()
-        return None
-    buff = [chr]
-    while is_numeric(chr = read_next_char()):
-        buff.append(chr)
+        return
+    read_next_char()
+    while is_numeric(current_char):
+        read_next_char()
     
-    if is_white_slash(chr):
+    if is_white_slash(current_char) or current_char == '':
         unread_last_char()
-        return buff
-    buff.append(chr)
-    # TODO: invalid number
+        # TODO: add number token to tokens.txt
+
+    else:
+        pass
+        # TODO: report lexical error: invalid number
     return
+
+def extract_id():
+    read_next_char()
+    if not is_letter(current_char):
+        unread_last_char()
+        return
+    read_next_char()
+    while (is_numeric_letter(current_char)):
+        read_next_char()
+    if is_white_slash(current_char) or current_char == '':
+        unread_last_char()
+        # TODO : add id to tokens.txt and symbols.txt   
+    
+    else:
+        pass
+        # TODO : report lexical error : invalid input
+
+    
 
 
 
