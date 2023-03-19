@@ -115,11 +115,10 @@ def extract_number ():
         read_next_char ()
     
     if is_invalid_char (current_char) or is_letter (current_char):
-        pass
-        # TODO: report lexical error: invalid number
+        report_invalid_number ()
     else:
         unread_last_char ()
-        # TODO: add number token to tokens.txt
+        add_number_token ()
 
 
 def extract_id_kw ():
@@ -132,11 +131,10 @@ def extract_id_kw ():
         read_next_char ()
     
     if is_invalid_char (current_char):
-        pass
-        # TODO : report lexical error : invalid input
+        report_invalid_input ()
     else:
         unread_last_char ()
-        # TODO : add id to tokens.txt and symbols.txt   
+        add_id_kw_token ()
 
 
 def extract_symbol ():
@@ -147,30 +145,26 @@ def extract_symbol ():
     if current_char == '*':
         read_next_char ()
         if is_invalid_char (current_char):
-            # TODO : report lexical error: invalid input
-            pass
+            report_invalid_input ()
         elif current_char == '/':
             # TODO : report lexical error: unmatched comment
             pass
         else:
             unread_last_char ()
-            # TODO : add token '*' to tokens.txt
+            add_symbol_token ()
 
     elif current_char == '=':
         read_next_char ()
         if is_invalid_char (current_char):
-            # TODO : report lexical error : invalid input
-            pass
+            report_invalid_input ()
         elif current_char == '=':
-            # TODO : add token '==' to tokens.txt
-            pass
+            add_symbol_token ()
         else:
             unread_last_char ()
-            # TODO : add token '=' to tokens.txt
+            add_symbol_token ()
     
     else:
-        # TODO : add symbol current_char to tokens.txt
-        pass
+        add_symbol_token ()
 
 
 def extract_comment ():
@@ -181,7 +175,7 @@ def extract_comment ():
     read_next_char ()
     if not current_char == '*':
         unread_last_char ()
-        # TODO : report lexical error : invalid input
+        report_invalid_input ()
         return
     last_char = None
     while last_char != '*' or current_char != '/':
@@ -213,7 +207,7 @@ def get_next_token ():
     if current_char == '':
         return None
     if is_invalid_char (current_char):
-        # TODO : report lexical error : invalid input
+        report_invalid_input ()
         return None
     extract_number ()
     extract_id_kw ()
