@@ -5,6 +5,9 @@
 ## GLOBAL VARIABLES
 
 
+from codecs import readbuffer_encode
+
+
 SYMBOLS = [';', ':', ',', '[', ']', '(', ')', '{', '}', '+', '-', '*', '=', '<', '==']
 WHITE_SPACES = [' ', '\n', '\r', '\t', '\v', '\f']
 KEYWORDS = ['if', 'else', 'void', 'int', 'repeat', 'break', 'until', 'return']
@@ -147,8 +150,7 @@ def extract_symbol ():
         if is_invalid_char (current_char):
             report_invalid_input ()
         elif current_char == '/':
-            # TODO : report lexical error: unmatched comment
-            pass
+            report_unmatched_comment ()
         else:
             unread_last_char ()
             add_symbol_token ()
@@ -183,7 +185,7 @@ def extract_comment ():
         if len (read_buffer) > 10:
             disable_buffer_saving ()
         if current_char == '':
-            # TODO : report lexical error : unclosed comment
+            report_unclosed_comment ()
             enable_buffer_saving ()
             return
         last_char = current_char
@@ -263,6 +265,18 @@ def report_invalid_number ():
 def report_invalid_input ():
     write_error_with_prompt ("Invalid input")
 
+
+def report_unmatched_comment ():
+    write_error_with_prompt ("Unmatched comment")
+
+
+def report_unclosed_comment ():
+    global read_buffer
+    if len (read_buffer) > 7:
+        read_buffer = read_buffer[:7]
+        read_buffer += ['.', '.', '.']
+    write_error_with_prompt ("Unclosed comment")
+    
 
 
 def add_number_token ():
