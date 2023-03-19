@@ -8,11 +8,13 @@ try:
     scanner.ERROR_FILE = open('lexical_errors.txt', 'w')
     scanner.TOKEN_FILE = open('tokens.txt', 'w')
     scanner.SYMBOL_FILE = open('symbol_table.txt', 'w')
+    scanner.init_symbol_table ()
 except:
     print('Error while configuring files: No input.txt or insufficient process access')
     exit(-1)
 
-while (scanner.get_next_token ()): pass
+while (scanner.get_next_token ()):
+    pass
 
 try:
     scanner.ERROR_FILE.write('\n')

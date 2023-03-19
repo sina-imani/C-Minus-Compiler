@@ -10,7 +10,7 @@ from codecs import readbuffer_encode
 
 SYMBOLS = [';', ':', ',', '[', ']', '(', ')', '{', '}', '+', '-', '*', '=', '<', '==']
 WHITE_SPACES = [' ', '\n', '\r', '\t', '\v', '\f']
-KEYWORDS = ['if', 'else', 'void', 'int', 'repeat', 'break', 'until', 'return']
+KEYWORDS = ['break', 'else', 'if', 'int', 'repeat', 'return', 'until', 'void']
 INPUT_FILE = None
 ERROR_FILE = None
 TOKEN_FILE = None
@@ -64,7 +64,7 @@ def unread_last_char ():
         line_number -= 1
     ready_char = current_char
     current_char = None
-    if read_buffer and save_in_buffer:
+    if read_buffer and save_in_buffer and current_char != '':
         del read_buffer[-1]
 
 
@@ -112,7 +112,7 @@ def extract_number ():
     read_next_char ()
     if not is_numeric (current_char):
         unread_last_char ()
-        return
+        return False
     read_next_char ()
     while is_numeric (current_char):
         read_next_char ()
@@ -122,13 +122,14 @@ def extract_number ():
     else:
         unread_last_char ()
         add_number_token ()
+    return True
 
 
 def extract_id_kw ():
     read_next_char ()
     if not is_letter (current_char):
         unread_last_char ()
-        return
+        return False
     read_next_char ()
     while (is_numeric_letter (current_char)):
         read_next_char ()
@@ -138,13 +139,13 @@ def extract_id_kw ():
     else:
         unread_last_char ()
         add_id_kw_token ()
-
+    return True
 
 def extract_symbol ():
     read_next_char ()
     if not is_symbol (current_char):
         unread_last_char ()
-        return
+        return False
     if current_char == '*':
         read_next_char ()
         if is_invalid_char (current_char):
@@ -168,42 +169,46 @@ def extract_symbol ():
     else:
         add_symbol_token ()
 
+    return True
 
 def extract_comment ():
     read_next_char ()
     if not current_char == '/':
         unread_last_char ()
-        return
+        return False
     read_next_char ()
     if not current_char == '*':
         unread_last_char ()
         report_invalid_input ()
-        return
+        return True
     last_char = None
+    comment_start_line = line_number
     while last_char != '*' or current_char != '/':
-        read_next_char ()
         if len (read_buffer) > 10:
             disable_buffer_saving ()
         if current_char == '':
-            report_unclosed_comment ()
+            report_unclosed_comment (comment_start_line)
             enable_buffer_saving ()
-            return
+            return True
         last_char = current_char
+        read_next_char ()
     enable_buffer_saving ()
+    return True
 
 
 def extract_whitespace ():
-    disable_buffer_saving ()
     read_next_char ()
     if not is_whitespace (current_char):
         unread_last_char ()
-    enable_buffer_saving ()
+        return False
+    return True
 
 
 # Token extraction entry
 
 
 def get_next_token ():
+    global token_lexeme, token_type
     read_buffer.clear ()
     read_next_char ()
     if current_char == '':
@@ -211,12 +216,17 @@ def get_next_token ():
     if is_invalid_char (current_char):
         report_invalid_input ()
         return True
-    extract_number ()
-    extract_id_kw ()
-    extract_symbol ()
-    extract_whitespace ()
-    extract_comment ()
-    return (token_type, token_lexeme)
+    unread_last_char ()
+    token_type = ''
+    token_lexeme = ''
+    if extract_number (): return (token_type, token_lexeme)
+    if extract_id_kw (): return (token_type, token_lexeme)
+    if extract_symbol (): return (token_type, token_lexeme)
+    if extract_whitespace (): return (token_type, token_lexeme)
+    if extract_comment (): return (token_type, token_lexeme)
+    print("UNREACHABLE PRINT STATEMENT")
+    return True
+    
 
 
 # Saving results and reporting errors
@@ -229,13 +239,15 @@ def build_string_from_buffer ():
     return s
 
 
-def write_to_file (file, last_lineno, content):
+def write_to_file (file, last_lineno, content, line_num=None):
     if file is None or not file.writable ():
         return
-    if not last_lineno is None and last_lineno < line_number:
-        if line_number > 1:
+    if line_num is None:
+        line_num = line_number
+    if not last_lineno is None and last_lineno < line_num:
+        if last_lineno > 0:
             file.write ('\n')
-        file.write (str (line_number) + '.\t')
+        file.write (str (line_num) + '.\t')
     file.write(content)
 
 
@@ -246,11 +258,13 @@ def write_token ():
     last_token_line_number = line_number
 
 
-def write_error_with_prompt (prompt : str):
+def write_error_with_prompt (prompt : str, line_num=None):
     global last_error_line_number
+    if line_num is None:
+        line_num = line_number
     write_to_file (ERROR_FILE, last_error_line_number, \
-        '(' + build_string_from_buffer () + ', ' + prompt + ') ')
-    last_error_line_number = line_number
+        '(' + build_string_from_buffer () + ', ' + prompt + ') ', line_num)
+    last_error_line_number = line_num
 
 
 def add_new_symbol (sym):
@@ -270,12 +284,13 @@ def report_unmatched_comment ():
     write_error_with_prompt ("Unmatched comment")
 
 
-def report_unclosed_comment ():
-    global read_buffer
+def report_unclosed_comment (command_start_line):
+    global read_buffer, last_error_line_number
     if len (read_buffer) > 7:
         read_buffer = read_buffer[:7]
         read_buffer += ['.', '.', '.']
-    write_error_with_prompt ("Unclosed comment")
+    write_error_with_prompt ("Unclosed comment", command_start_line)
+
     
 
 
@@ -303,11 +318,9 @@ def add_symbol_token ():
 
 
 
-## MAIN
-
-
-for kw in KEYWORDS:
-    add_new_symbol(kw)
+def init_symbol_table ():
+    for kw in KEYWORDS:
+        add_new_symbol(kw)
 
 
 
