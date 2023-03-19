@@ -58,6 +58,9 @@ def is_letter(chr):
 def is_numeric_letter(chr):
     return is_letter(chr) or is_numeric(chr)
 
+def is_whitespace(chr):
+    return chr in WHITE_SPACES
+
 def is_white_slash(chr):
     return chr in WHITE_SPACES or chr == '/'
 
@@ -166,6 +169,12 @@ def extract_comment():
         last_char = current_char
     enable_buffer_saving()
 
+def extract_whitespace():
+    disable_buffer_saving()
+    read_next_char()
+    if not is_whitespace(current_char):
+        unread_last_char()
+    enable_buffer_saving()
 
 
 
