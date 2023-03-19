@@ -13,6 +13,9 @@ except:
 
 SYMBOLS = [';', ':', ',', '[', ']', '(', ')', '{', '}', '+', '-', '*', '=', '<', '==']
 WHITE_SPACES = [' ', '\n', '\r', '\t', '\v', '\f']
+ERROR_FILE = None
+TOKEN_FILE = None
+SYMBOL_FILE = None
 save_in_buffer = True
 current_char = None
 ready_char = None
@@ -215,6 +218,27 @@ def get_next_token ():
     extract_whitespace ()
     extract_comment ()
     return (token_type, token_lexeme)
+
+
+# Saving results and reporting errors
+
+
+def build_string_from_buffer ():
+    s = ''
+    for c in read_buffer:
+        s += c
+    return s
+
+
+def report_invalid_number ():
+    if ERROR_FILE is None:
+        return
+    ERROR_FILE.write (str (line_number))
+    ERROR_FILE.write ('.\t(')
+    ERROR_FILE.write (build_string_from_buffer ())
+    ERROR_FILE.write (', Invalid number \n')
+
+
 
 
 
