@@ -1,10 +1,14 @@
 # IAWT
 
-from typing import *
 
 ## GLOBAL VARIABLES
 
-INPUT_FILE = None
+try:
+    INPUT_FILE = open('input.txt', 'r')
+except:
+    print('No input file found!')
+    exit(-1)
+
 SYMBOLS = [';', ':', ',', '[', ']', '(', ')', '{', '}', '+', '-', '*', '=', '<', '==']
 WHITE_SPACES = [' ', '\n', '\r', '\t', '\v', '\f']
 current_char = None
@@ -44,12 +48,17 @@ def is_letter(chr):
     return 'a' <= chr <= 'z' or 'A' <= chr <= 'Z'
 
 def is_numeric_letter(chr):
-    return is_letter(chr) or is_numeric(letter)
+    return is_letter(chr) or is_numeric(chr)
 
 def is_white_slash(chr):
     return chr in WHITE_SPACES or chr == '/'
 
+def is_symbol(chr):
+    return chr in SYMBOLS
+
 def is_invalid_char(chr):
+    if chr == '':
+        return False
     if is_numeric(chr) or is_letter(chr):
         return False
     elif chr in SYMBOLS or is_white_slash(chr):
@@ -68,14 +77,13 @@ def extract_number():
     while is_numeric(current_char):
         read_next_char()
     
-    if is_white_slash(current_char) or current_char == '':
+    if is_invalid_char(current_char) or is_letter(current_char):
+        pass
+        # TODO: report lexical error: invalid number
+    else:
         unread_last_char()
         # TODO: add number token to tokens.txt
 
-    else:
-        pass
-        # TODO: report lexical error: invalid number
-    return
 
 def extract_id():
     read_next_char()
@@ -85,24 +93,50 @@ def extract_id():
     read_next_char()
     while (is_numeric_letter(current_char)):
         read_next_char()
-    if is_white_slash(current_char) or current_char == '':
-        unread_last_char()
-        # TODO : add id to tokens.txt and symbols.txt   
     
-    else:
+    if is_invalid_char(current_char):
         pass
         # TODO : report lexical error : invalid input
+    else:
+        unread_last_char()
+        # TODO : add id to tokens.txt and symbols.txt   
 
-    
+
+def extract_symbol():
+    read_next_char()
+    if not is_symbol(current_char):
+        unread_last_char()
+        return
+    if current_char == '*':
+        read_next_char()
+        if is_invalid_char(current_char):
+            # TODO : report lexical error: invalid input
+            pass
+        elif current_char == '/':
+            # TODO : report lexical error: unmatched comment
+            pass
+        else:
+            unread_last_char()
+            # TODO : add token '*' to tokens.txt
+
+    elif current_char == '=':
+        read_next_char()
+        if is_invalid_char(current_char):
+            # TODO : report lexical error : invalid input
+            pass
+        elif current_char == '=':
+            # TODO : add token '==' to tokens.txt
+            pass
+        else:
+            unread_last_char()
+            # TODO : add token '=' to tokens.txt
+        
+    else:
+        # TODO : add symbol current_char to tokens.txt
+        pass
 
 
 
-## MAIN
-
-try:
-    INPUT_FILE = open('input.txt', 'r')
-except:
-    print('No input file found!')
 
 
 
