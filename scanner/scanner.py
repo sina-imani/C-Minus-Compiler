@@ -207,10 +207,10 @@ def get_next_token ():
     read_buffer.clear ()
     read_next_char ()
     if current_char == '':
-        return None
+        return False
     if is_invalid_char (current_char):
         report_invalid_input ()
-        return None
+        return True
     extract_number ()
     extract_id_kw ()
     extract_symbol ()
