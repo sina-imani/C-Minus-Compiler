@@ -16,13 +16,15 @@ WHITE_SPACES = [' ', '\n', '\r', '\t', '\v', '\f']
 ERROR_FILE = None
 TOKEN_FILE = None
 SYMBOL_FILE = None
-save_in_buffer = True
-current_char = None
-ready_char = None
-read_buffer = []
-line_number = 0
-token_lexeme = None
-token_type = None
+save_in_buffer : bool = True
+current_char : str | None = None
+ready_char : str | None = None
+read_buffer : list = []
+line_number : int = 1
+token_lexeme : str
+token_type : str
+last_token_line_number : int = 0
+last_error_line_number : int = 0
 
 
 ## FUNCTIONS
@@ -230,13 +232,36 @@ def build_string_from_buffer ():
     return s
 
 
-def report_invalid_number ():
-    if ERROR_FILE is None:
+def write_to_file (file, last_lineno, content):
+    if file is None or not file.writable ():
         return
-    ERROR_FILE.write (str (line_number))
-    ERROR_FILE.write ('.\t(')
-    ERROR_FILE.write (build_string_from_buffer ())
-    ERROR_FILE.write (', Invalid number \n')
+    if last_lineno < line_number:
+        if line_number > 1:
+            file.write ('\n')
+        file.write (str (line_number) + '.\t')
+    file.write(content)
+
+
+def write_token ():
+    global last_token_line_number
+    write_to_file (TOKEN_FILE, last_token_line_number, \
+        '(' + token_type + ', ' + token_lexeme + ') ')
+    last_token_line_number = line_number
+
+
+def write_error_with_prompt (prompt : str):
+    global last_error_line_number
+    write_to_file (ERROR_FILE, last_error_line_number, \
+        '(' + build_string_from_buffer () + ', ' + prompt + ') ')
+    last_error_line_number = line_number
+
+
+def report_invalid_number ():
+    write_error_with_prompt ("Invalid number")
+
+
+def report_invalid_input ():
+    write_error_with_prompt ("Invalid input")
 
 
 
