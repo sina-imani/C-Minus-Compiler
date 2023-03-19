@@ -5,17 +5,16 @@
 ## GLOBAL VARIABLES
 
 
-try:
-    INPUT_FILE = open ('input.txt', 'r')
-except:
-    print ('No input file found!')
-    exit (-1)
-
 SYMBOLS = [';', ':', ',', '[', ']', '(', ')', '{', '}', '+', '-', '*', '=', '<', '==']
 WHITE_SPACES = [' ', '\n', '\r', '\t', '\v', '\f']
+KEYWORDS = ['if', 'else', 'void', 'int', 'repeat', 'break', 'until', 'return']
+INPUT_FILE = None
 ERROR_FILE = None
 TOKEN_FILE = None
 SYMBOL_FILE = None
+
+
+symbol_list = []
 save_in_buffer : bool = True
 current_char : str | None = None
 ready_char : str | None = None
@@ -43,6 +42,8 @@ def disable_buffer_saving ():
 
 def read_next_char ():
     global current_char, ready_char, line_number
+    if INPUT_FILE is None:
+        return
     if ready_char is None:
         current_char = INPUT_FILE.read (1)
     else:
@@ -121,7 +122,7 @@ def extract_number ():
         # TODO: add number token to tokens.txt
 
 
-def extract_id ():
+def extract_id_kw ():
     read_next_char ()
     if not is_letter (current_char):
         unread_last_char ()
@@ -215,7 +216,7 @@ def get_next_token ():
         # TODO : report lexical error : invalid input
         return None
     extract_number ()
-    extract_id ()
+    extract_id_kw ()
     extract_symbol ()
     extract_whitespace ()
     extract_comment ()
@@ -235,7 +236,7 @@ def build_string_from_buffer ():
 def write_to_file (file, last_lineno, content):
     if file is None or not file.writable ():
         return
-    if last_lineno < line_number:
+    if not last_lineno is None and last_lineno < line_number:
         if line_number > 1:
             file.write ('\n')
         file.write (str (line_number) + '.\t')
@@ -256,6 +257,11 @@ def write_error_with_prompt (prompt : str):
     last_error_line_number = line_number
 
 
+def add_new_symbol (sym):
+    symbol_list.append(sym)
+    write_to_file (SYMBOL_FILE, None, str (len (symbol_list)) + '\t' + sym + '\n')
+
+
 def report_invalid_number ():
     write_error_with_prompt ("Invalid number")
 
@@ -265,6 +271,35 @@ def report_invalid_input ():
 
 
 
+def add_number_token ():
+    global token_lexeme, token_type
+    token_lexeme = build_string_from_buffer ()
+    token_type = 'NUM'
+    write_token ()
+
+
+def add_id_kw_token ():
+    global token_lexeme, token_type
+    token_lexeme = build_string_from_buffer ()
+    token_type = 'KEYWORD' if token_lexeme in KEYWORDS else 'ID'
+    if not token_lexeme in symbol_list:
+        add_new_symbol (token_lexeme)
+    write_token ()
+
+
+def add_symbol_token ():
+    global token_lexeme, token_type
+    token_lexeme = build_string_from_buffer ()
+    token_type = 'SYMBOL'
+    write_token ()
+
+
+
+## MAIN
+
+
+for kw in KEYWORDS:
+    add_new_symbol(kw)
 
 
 
