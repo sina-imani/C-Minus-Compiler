@@ -18,7 +18,8 @@ current_char = None
 ready_char = None
 read_buffer = []
 line_number = 0
-
+token_lexeme = None
+token_type = None
 
 
 ## FUNCTIONS
@@ -196,6 +197,24 @@ def extract_whitespace ():
         unread_last_char ()
     enable_buffer_saving ()
 
+
+# Token extraction entry
+
+
+def get_next_token ():
+    read_buffer.clear ()
+    read_next_char ()
+    if current_char == '':
+        return None
+    if is_invalid_char (current_char):
+        # TODO : report lexical error : invalid input
+        return None
+    extract_number ()
+    extract_id ()
+    extract_symbol ()
+    extract_whitespace ()
+    extract_comment ()
+    return (token_type, token_lexeme)
 
 
 
