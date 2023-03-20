@@ -7,7 +7,7 @@
 
 from codecs import readbuffer_encode
 
-
+NEW_LINE = '\r\n'
 SYMBOLS = [';', ':', ',', '[', ']', '(', ')', '{', '}', '+', '-', '*', '=', '<', '==']
 WHITE_SPACES = [' ', '\n', '\r', '\t', '\v', '\f']
 KEYWORDS = ['break', 'else', 'if', 'int', 'repeat', 'return', 'until', 'void']
@@ -18,15 +18,15 @@ SYMBOL_FILE = None
 
 
 symbol_list = []
-save_in_buffer : bool = True
-current_char : str | None = None
-ready_char : str | None = None
-read_buffer : list = []
-line_number : int = 1
-token_lexeme : str
-token_type : str
-last_token_line_number : int = 0
-last_error_line_number : int = 0
+save_in_buffer = True
+current_char = None
+ready_char = None
+read_buffer = []
+line_number = 1
+token_lexeme = ''
+token_type = ''
+last_token_line_number = 0
+last_error_line_number = 0
 
 
 ## FUNCTIONS
@@ -249,7 +249,7 @@ def write_to_file (file, last_lineno, content, line_num=None):
         line_num = line_number
     if not last_lineno is None and last_lineno < line_num:
         if last_lineno > 0:
-            file.write ('\n')
+            file.write (NEW_LINE)
         file.write (str (line_num) + '.\t')
     file.write(content)
 
@@ -272,7 +272,7 @@ def write_error_with_prompt (prompt : str, line_num=None):
 
 def add_new_symbol (sym):
     symbol_list.append(sym)
-    write_to_file (SYMBOL_FILE, None, str (len (symbol_list)) + '.\t' + sym + '\n')
+    write_to_file (SYMBOL_FILE, None, str (len (symbol_list)) + '.\t' + sym + NEW_LINE)
 
 
 def report_invalid_number ():
@@ -324,19 +324,3 @@ def add_symbol_token ():
 def init_symbol_table ():
     for kw in KEYWORDS:
         add_new_symbol(kw)
-
-
-
-"""
-read_next_char ()
-get_next_token ()
-
-extract_number / id / symbol / comment / white_space ()
-
-is_keyword ()
-is_invalid_char ()
-
-INPUT_FILE
-ready_char
-line_number
-"""

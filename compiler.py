@@ -20,8 +20,8 @@ try:
     if scanner.last_error_line_number == 0:
         scanner.ERROR_FILE.write('There is no lexical error.')
     else:
-        scanner.ERROR_FILE.write('\n')
-    scanner.TOKEN_FILE.write('\n')
+        scanner.ERROR_FILE.write(scanner.NEW_LINE)
+    scanner.TOKEN_FILE.write(scanner.NEW_LINE)
     
     scanner.INPUT_FILE.close()
     scanner.ERROR_FILE.close()
