@@ -17,7 +17,10 @@ while (scanner.get_next_token ()):
     pass
 
 try:
-    scanner.ERROR_FILE.write('\n')
+    if scanner.last_error_line_number == 0:
+        scanner.ERROR_FILE.write('There is no lexical error.')
+    else:
+        scanner.ERROR_FILE.write('\n')
     scanner.TOKEN_FILE.write('\n')
     
     scanner.INPUT_FILE.close()

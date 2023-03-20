@@ -54,7 +54,7 @@ def read_next_char ():
         ready_char = None
     if current_char == '\n':
         line_number += 1
-    if save_in_buffer and current_char != '':
+    if save_in_buffer:
         read_buffer.append (current_char)
 
 
@@ -64,7 +64,7 @@ def unread_last_char ():
         line_number -= 1
     ready_char = current_char
     current_char = None
-    if read_buffer and save_in_buffer and current_char != '':
+    if read_buffer and save_in_buffer:
         del read_buffer[-1]
 
 
@@ -141,6 +141,7 @@ def extract_id_kw ():
         add_id_kw_token ()
     return True
 
+
 def extract_symbol ():
     read_next_char ()
     if not is_symbol (current_char):
@@ -171,6 +172,7 @@ def extract_symbol ():
 
     return True
 
+
 def extract_comment ():
     read_next_char ()
     if not current_char == '/':
@@ -178,7 +180,8 @@ def extract_comment ():
         return False
     read_next_char ()
     if not current_char == '*':
-        unread_last_char ()
+        if not is_invalid_char (current_char):
+            unread_last_char ()
         report_invalid_input ()
         return True
     last_char = None
@@ -269,7 +272,7 @@ def write_error_with_prompt (prompt : str, line_num=None):
 
 def add_new_symbol (sym):
     symbol_list.append(sym)
-    write_to_file (SYMBOL_FILE, None, str (len (symbol_list)) + '\t' + sym + '\n')
+    write_to_file (SYMBOL_FILE, None, str (len (symbol_list)) + '.\t' + sym + '\n')
 
 
 def report_invalid_number ():
