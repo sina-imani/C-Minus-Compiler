@@ -161,10 +161,8 @@ def pre_process(cfg: List[str]):
     for key in productions.keys():
         find_first(key, productions)
 
-    for key in productions.keys():
-        find_follow(key, productions)
+    print_first()
 
-    print('fuck')
     print(follow['Program'])
 
 
@@ -183,3 +181,9 @@ def map_non_terminal_to_production(cfg: List[str]) -> Dict[str, List[List[str]]]
         lhs, rhs = production.split(' -> ')
         productions[lhs] = parse_production(rhs)
     return productions
+
+
+def print_first():
+    for key, value in first:
+        print(key, value)
+
