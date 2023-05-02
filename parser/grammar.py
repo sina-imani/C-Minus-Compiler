@@ -4,8 +4,9 @@ START = 'Program'
 
 first: Dict[str, Set[str]] = {}
 follow: Dict[str, Set[str]] = {}
+productions: Dict[str, List[List[str]]] | None = None
 
-grammar: List[str] = ["Program -> Declaration-list",
+grammar: List[str] = ["Program -> Declaration-list $",
                       "Declaration-list -> Declaration Declaration-list | EPSILON",
                       "Declaration -> Declaration-initial Declaration-prime",
                       "Declaration-initial -> Type-specifier ID",
@@ -156,34 +157,27 @@ def find_follow(s, productions):
     return follow_set
 
 
-def pre_process(cfg: List[str]):
-    productions = map_non_terminal_to_production(cfg)
-    for key in productions.keys():
-        find_first(key, productions)
-
-    print_first()
-
-    print(follow['Program'])
+def print_first():
+    for key, value in enumerate(first):
+        print(value, first[value])
 
 
 def parse_production(production: str) -> List[List[str]]:
     production_list: List[List[str]] = []
-    productions = production.split(' | ')
-    for prod in productions:
+    productions_nt = production.split(' | ')
+    for prod in productions_nt:
         production_list.append(prod.split())
 
     return production_list
 
 
-def map_non_terminal_to_production(cfg: List[str]) -> Dict[str, List[List[str]]]:
-    productions = {}
-    for production in cfg:
-        lhs, rhs = production.split(' -> ')
-        productions[lhs] = parse_production(rhs)
-    return productions
+def get_structured_productions() -> Dict[str, List[List[str]]]:
+    if productions is None:
+        productions_cfg = {}
+        for production in grammar:
+            lhs, rhs = production.split(' -> ')
+            productions_cfg[lhs] = parse_production(rhs)
+        return productions_cfg
 
-
-def print_first():
-    for key, value in first:
-        print(key, value)
-
+    else:
+        return productions
