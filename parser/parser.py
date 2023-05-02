@@ -122,3 +122,6 @@ def run():
             token = select_next_move(current_state, token)
         else:
             token = select_next_move(current_state, token)
+
+    for pre, fill, node in RenderTree(START):
+        print("%s%s" % (pre, node.name))
