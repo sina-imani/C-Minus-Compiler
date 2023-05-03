@@ -2,107 +2,108 @@ from typing import List, Set, Tuple, Dict
 
 START = 'Program'
 
-first: Dict[str, Set[str]] = {}
-follow: Dict[str, Set[str]] = {}
 productions: Dict[str, List[List[str]]] | None = None
 
-first = {
-    'Program': {';', '[', '(', 'int', 'void', ''},
-    'Declaration_list': {';', '[', '(', 'int', 'void', ''},
+first: Dict[str, Set[str]] = {
+    'Program': {';', '[', '(', 'int', 'void', 'epsilon'},
+    'Declaration-list': {';', '[', '(', 'int', 'void', 'epsilon'},
     'Declaration': {';', '[', '(', 'int', 'void'},
-    'Declaration_initial': {'int', 'void'},
-    'Declaration_prime': {';', '[', '('},
-    'Var_declaration_prime': {';', '['},
-    'Fun_declaration_prime': {'('},
-    'Type_specifier': {'int', 'void'},
+    'Declaration-initial': {'int', 'void'},
+    'Declaration-prime': {';', '[', '('},
+    'Var-declaration-prime': {';', '['},
+    'Fun-declaration-prime': {'('},
+    'Type-specifier': {'int', 'void'},
     'Params': {'int', 'void'},
-    'Param_list': {',', ''},
+    'Param-list': {',', 'epsilon'},
     'Param': {'int', 'void'},
-    'Param_prime': {'[', ''},
-    'Compound_stmt': {'{'},
-    'Statement_list': {'ID', ';', 'NUM', '(', '{', 'break', 'if', 'repeat', 'return', ''},
+    'Param-prime': {'[', 'epsilon'},
+    'Compound-stmt': {'{'},
+    'Statement-list': {'ID', ';', 'NUM', '(', '{', 'break', 'if', 'repeat', 'return', 'epsilon'},
     'Statement': {'ID', ';', 'NUM', '(', '{', 'break', 'if', 'repeat', 'return'},
-    'Expression_stmt': {'ID', ';', 'NUM', '(', 'break'},
-    'Selection_stmt': {'if'},
-    'Iteration_stmt': {'repeat'},
-    'Return_stmt': {'return'},
-    'Return_stmt_prime': {'ID', ';', 'NUM', '('},
+    'Expression-stmt': {'ID', ';', 'NUM', '(', 'break'},
+    'Selection-stmt': {'if'},
+    'Iteration-stmt': {'repeat'},
+    'Return-stmt': {'return'},
+    'Return-stmt-prime': {'ID', ';', 'NUM', '('},
     'Expression': {'ID', 'NUM', '('},
-    'B': {'[', '(', '=', '<', '==', '+', '-', '*', ''},
-    'H': {'=', '<', '==', '+', '-', '*', ''},
-    'Simple_expression_zegond': {'NUM', '('},
-    'Simple_expression_prime': {'(', '<', '==', '+', '-', '*', ''},
-    'C': {'<', '==', ''},
+    'B': {'[', '(', '=', '<', '==', '+', '-', '*', 'epsilon'},
+    'H': {'=', '<', '==', '+', '-', '*', 'epsilon'},
+    'Simple-expression-zegond': {'NUM', '('},
+    'Simple-expression-prime': {'(', '<', '==', '+', '-', '*', 'epsilon'},
+    'C': {'<', '==', 'epsilon'},
     'Relop': {'<', '=='},
-    'Additive_expression': {'ID', 'NUM', '('},
-    'Additive_expression_prime': {'(', '+', '-', '*', ''},
-    'Additive_expression_zegond': {'NUM', '('},
-    'D': {'+', '-', ''},
+    'Additive-expression': {'ID', 'NUM', '('},
+    'Additive-expression-prime': {'(', '+', '-', '*', 'epsilon'},
+    'Additive-expression-zegond': {'NUM', '('},
+    'D': {'+', '-', 'epsilon'},
     'Addop': {'+', '-'},
     'Term': {'ID', 'NUM', '('},
-    'Term_prime': {'(', '*', ''},
-    'Term_zegond': {'NUM', '('},
-    'G': {'*', ''},
+    'Term-prime': {'(', '*', 'epsilon'},
+    'Term-zegond': {'NUM', '('},
+    'G': {'*', 'epsilon'},
     'Factor': {'ID', 'NUM', '('},
-    'Var_call_prime': {'[', '(', ''},
-    'Var_prime': {'[', ''},
-    'Factor_prime': {'(', ''},
-    'Factor_zegond': {'NUM', '('},
-    'Args': {'ID', 'NUM', '(', ''},
-    'Arg_list': {'ID', 'NUM', '('},
-    'Arg_list_prime': {',', ''}
+    'Var-call-prime': {'[', '(', 'epsilon'},
+    'Var-prime': {'[', 'epsilon'},
+    'Factor-prime': {'(', 'epsilon'},
+    'Factor-zegond': {'NUM', '('},
+    'Args': {'ID', 'NUM', '(', 'epsilon'},
+    'Arg-list': {'ID', 'NUM', '('},
+    'Arg-list-prime': {',', 'epsilon'}
 }
 
-
-follow = {
+follow: Dict[str, Set[str]] = {
     'Program': {'$'},
-    'Declaration_list': {'$', 'repeat', 'if', '(', 'ID', '{', 'break', '}', 'NUM', 'return', ';'},
+    'Declaration-list': {'$', 'repeat', 'if', '(', 'ID', '{', 'break', '}', 'NUM', 'return', ';'},
     'Declaration': {'$', 'repeat', 'int', 'if', '(', 'ID', '[', 'void', '{', 'NUM', '}', 'break', 'return', ';'},
-    'Declaration_initial': {'$', 'repeat', 'int', 'if', '(', 'ID', ',', '[', 'void', '{', 'NUM', '}', 'break', 'return', ')', ';'},
-    'Declaration_prime': {'$', 'repeat', 'int', 'if', '(', 'ID', '[', 'void', '{', 'NUM', '}', 'break', 'return', ';'},
-    'Var_declaration_prime': {'$', 'repeat', 'int', 'if', '(', 'ID', '[', 'void', '{', 'NUM', '}', 'break', 'return', ';'},
-    'Fun_declaration_prime': {'$', 'repeat', 'int', 'if', '(', 'ID', '[', 'void', '{', 'NUM', '}', 'break', 'return', ';'},
-    'Type_specifier': {'ID'},
+    'Declaration-initial': {'$', 'repeat', 'int', 'if', '(', 'ID', ',', '[', 'void', '{', 'NUM', '}', 'break', 'return',
+                            ')', ';'},
+    'Declaration-prime': {'$', 'repeat', 'int', 'if', '(', 'ID', '[', 'void', '{', 'NUM', '}', 'break', 'return', ';'},
+    'Var-declaration-prime': {'$', 'repeat', 'int', 'if', '(', 'ID', '[', 'void', '{', 'NUM', '}', 'break', 'return',
+                              ';'},
+    'Fun-declaration-prime': {'$', 'repeat', 'int', 'if', '(', 'ID', '[', 'void', '{', 'NUM', '}', 'break', 'return',
+                              ';'},
+    'Type-specifier': {'ID'},
     'Params': {')'},
-    'Param_list': {')'},
+    'Param-list': {')'},
     'Param': {',', ')'},
-    'Param_prime': {',', ')'},
-    'Compound_stmt': {'$', 'repeat', 'int', 'else', 'until', 'if', '(', 'ID', '[', 'void', '{', 'NUM', '}', 'break', 'return', ';'},
-    'Statement_list': {'}'},
+    'Param-prime': {',', ')'},
+    'Compound-stmt': {'$', 'repeat', 'int', 'else', 'until', 'if', '(', 'ID', '[', 'void', '{', 'NUM', '}', 'break',
+                      'return', ';'},
+    'Statement-list': {'}'},
     'Statement': {'repeat', 'else', 'until', 'if', '(', 'ID', '{', 'break', '}', 'NUM', 'return', ';'},
-    'Expression_stmt': {'repeat', 'else', 'until', 'if', '(', 'ID', '{', 'break', '}', 'NUM', 'return', ';'},
-    'Selection_stmt': {'repeat', 'else', 'until', 'if', '(', 'ID', '{', 'break', '}', 'NUM', 'return', ';'},
-    'Iteration_stmt': {'repeat', 'else', 'until', 'if', '(', 'ID', '{', 'break', '}', 'NUM', 'return', ';'},
-    'Return_stmt': {'repeat', 'else', 'until', 'if', '(', 'ID', '{', 'break', '}', 'NUM', 'return', ';'},
-    'Return_stmt_prime': {'repeat', 'else', 'until', 'if', '(', 'ID', '{', 'break', '}', 'NUM', 'return', ';'},
+    'Expression-stmt': {'repeat', 'else', 'until', 'if', '(', 'ID', '{', 'break', '}', 'NUM', 'return', ';'},
+    'Selection-stmt': {'repeat', 'else', 'until', 'if', '(', 'ID', '{', 'break', '}', 'NUM', 'return', ';'},
+    'Iteration-stmt': {'repeat', 'else', 'until', 'if', '(', 'ID', '{', 'break', '}', 'NUM', 'return', ';'},
+    'Return-stmt': {'repeat', 'else', 'until', 'if', '(', 'ID', '{', 'break', '}', 'NUM', 'return', ';'},
+    'Return-stmt-prime': {'repeat', 'else', 'until', 'if', '(', 'ID', '{', 'break', '}', 'NUM', 'return', ';'},
     'Expression': {',', ')', ']', ';'},
     'B': {',', ')', ']', ';'},
     'H': {',', ')', ']', ';'},
-    'Simple_expression_zegond': {',', ')', ']', ';'},
-    'Simple_expression_prime': {',', ')', ']', ';'},
+    'Simple-expression-zegond': {',', ')', ']', ';'},
+    'Simple-expression-prime': {',', ')', ']', ';'},
     'C': {',', ')', ']', ';'},
     'Relop': {'(', 'NUM', 'ID'},
-    'Additive_expression': {',', ')', ']', ';'},
-    'Additive_expression_prime': {'<', ']', ',', '==', ')', ';'},
-    'Additive_expression_zegond': {'<', ']', ',', '==', ')', ';'},
+    'Additive-expression': {',', ')', ']', ';'},
+    'Additive-expression-prime': {'<', ']', ',', '==', ')', ';'},
+    'Additive-expression-zegond': {'<', ']', ',', '==', ')', ';'},
     'D': {'<', ']', ',', '==', ')', ';'},
     'Addop': {'(', 'NUM', 'ID'},
     'Term': {'<', ']', '+', ',', '-', '==', ')', ';'},
-    'Term_prime': {'<', ']', '+', ',', '-', '==', ')', ';'},
-    'Term_zegond': {'<', ']', '+', ',', '-', '==', ')', ';'},
+    'Term-prime': {'<', ']', '+', ',', '-', '==', ')', ';'},
+    'Term-zegond': {'<', ']', '+', ',', '-', '==', ')', ';'},
     'G': {'<', ']', '+', ',', '-', '==', ')', ';'},
     'Factor': {'<', ']', '+', '*', ',', '-', '==', ')', ';'},
-    'Var_call_prime': {'<', ']', '+', '*', ',', '-', '==', ')', ';'},
-    'Var_prime': {'<', ']', '+', '*', ',', '-', '==', ')', ';'},
-    'Factor_prime': {'<', ']', '+', '*', ',', '-', '==', ')', ';'},
-    'Factor_zegond': {'<', ']', '+', '*', ',', '-', '==', ')', ';'},
+    'Var-call-prime': {'<', ']', '+', '*', ',', '-', '==', ')', ';'},
+    'Var-prime': {'<', ']', '+', '*', ',', '-', '==', ')', ';'},
+    'Factor-prime': {'<', ']', '+', '*', ',', '-', '==', ')', ';'},
+    'Factor-zegond': {'<', ']', '+', '*', ',', '-', '==', ')', ';'},
     'Args': {')'},
-    'Arg_list': {')'},
-    'Arg_list_prime': {')'}
+    'Arg-list': {')'},
+    'Arg-list-prime': {')'}
 }
 
 grammar: List[str] = ["Program -> Declaration-list $",
-                      "Declaration-list -> Declaration Declaration-list | EPSILON",
+                      "Declaration-list -> Declaration Declaration-list | epsilon",
                       "Declaration -> Declaration-initial Declaration-prime",
                       "Declaration-initial -> Type-specifier ID",
                       "Declaration-prime -> Fun-declaration-prime | Var-declaration-prime",
@@ -110,11 +111,11 @@ grammar: List[str] = ["Program -> Declaration-list $",
                       "Fun-declaration-prime -> ( Params ) Compound-stmt",
                       "Type-specifier -> int | void",
                       "Params -> int ID Param-prime Param-list | void",
-                      "Param-list -> , Param Param-list | EPSILON",
+                      "Param-list -> , Param Param-list | epsilon",
                       "Param -> Declaration-initial Param-prime",
-                      "Param-prime -> [ ] | EPSILON",
+                      "Param-prime -> [ ] | epsilon",
                       "Compound-stmt -> { Declaration-list Statement-list }",
-                      "Statement-list -> Statement Statement-list | EPSILON",
+                      "Statement-list -> Statement Statement-list | epsilon",
                       "Statement -> Expression-stmt | Compound-stmt | Selection-stmt | Iteration-stmt | Return-stmt",
                       "Expression-stmt -> Expression ; | break ; | ;",
                       "Selection-stmt -> if ( Expression ) Statement else Statement",
@@ -126,22 +127,23 @@ grammar: List[str] = ["Program -> Declaration-list $",
                       "H -> = Expression | G D C",
                       "Simple-expression-zegond -> Additive-expression-zegond C",
                       "Simple-expression-prime -> Additive-expression-prime C",
-                      "C -> Relop Additive-expression | EPSILON",
+                      "C -> Relop Additive-expression | epsilon",
                       "Relop -> < | ==",
                       "Additive-expression -> Term D",
                       "Additive-expression-prime -> Term-prime D",
                       "Additive-expression-zegond -> Term-zegond D",
-                      "D -> Addop Term D | EPSILON", "Addop -> + | -",
-                      "Term -> Factor G", "Term-prime -> Factor-prime G",
+                      "D -> Addop Term D | epsilon", "Addop -> + | -",
+                      "Term -> Factor G",
+                      "Term-prime -> Factor-prime G",
                       "Term-zegond -> Factor-zegond G",
-                      "G -> * Factor G | EPSILON",
+                      "G -> * Factor G | epsilon",
                       "Factor -> ( Expression ) | ID Var-call-prime | NUM",
                       "Var-call-prime -> ( Args ) | Var-prime",
-                      "Var-prime -> [ Expression ] | EPSILON",
-                      "Factor-prime -> ( Args ) | EPSILON",
-                      "Factor-zegond -> ( Expression ) | NUM", "Args -> Arg-list | EPSILON",
+                      "Var-prime -> [ Expression ] | epsilon",
+                      "Factor-prime -> ( Args ) | epsilon",
+                      "Factor-zegond -> ( Expression ) | NUM", "Args -> Arg-list | epsilon",
                       "Arg-list -> Expression Arg-list-prime",
-                      "Arg-list-prime -> , Expression Arg-list-prime | EPSILON"]
+                      "Arg-list-prime -> , Expression Arg-list-prime | epsilon"]
 
 terminals: Set[str] = {
     ';', ':', ',', '[', ']', '(', ')', '{', '}', '+', '-', '*', '=', '<', '==',
@@ -186,19 +188,19 @@ def find_first(symbol: str, productions: Dict[str, List[List[str]]]) -> Set[str]
         if is_terminal(p[0]):
             first_set.add(p[0])
 
-        elif p[0] == 'EPSILON':
-            first_set.add('EPSILON')
+        elif p[0] == 'epsilon':
+            first_set.add('epsilon')
 
         else:
             for i, s in enumerate(p):
                 first_s = find_first(s, productions)
-                if 'EPSILON' not in first_s:
+                if 'epsilon' not in first_s:
                     first_set |= first_s
                     break
                 else:
-                    first_set.update({elem for elem in first_s if elem != 'EPSILON'})
+                    first_set.update({elem for elem in first_s if elem != 'epsilon'})
                     if i == len(p) - 1:
-                        first_set.add('EPSILON')
+                        first_set.add('epsilon')
 
     first[symbol] = first_set
     return first_set
@@ -231,17 +233,17 @@ def find_follow(s, productions):
                         else:
                             f = find_follow(productions[i][j][idx], productions)
 
-                            if 'EPSILON' not in f:
+                            if 'epsilon' not in f:
                                 for x in f:
                                     follow_set.add(x)
                                 break
-                            elif 'EPSILON' in f and idx != len(productions[i][j]) - 1:
-                                f.remove('EPSILON')
+                            elif 'epsilon' in f and idx != len(productions[i][j]) - 1:
+                                f.remove('epsilon')
                                 for k in f:
                                     follow_set.add(k)
 
-                            elif 'EPSILON' in f and idx == len(productions[i][j]) - 1:
-                                f.remove('EPSILON')
+                            elif 'epsilon' in f and idx == len(productions[i][j]) - 1:
+                                f.remove('epsilon')
                                 for k in f:
                                     follow_set.add(k)
 
@@ -267,12 +269,14 @@ def parse_production(production: str) -> List[List[str]]:
 
 
 def get_structured_productions() -> Dict[str, List[List[str]]]:
+    global productions
     if productions is None:
-        productions_cfg = {}
+        productions = {}
         for production in grammar:
             lhs, rhs = production.split(' -> ')
-            productions_cfg[lhs] = parse_production(rhs)
-        return productions_cfg
+            productions[lhs] = parse_production(rhs)
+
+        return productions
 
     else:
         return productions

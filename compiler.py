@@ -9,6 +9,9 @@ try:
     scanner.ERROR_FILE = open('lexical_errors.txt', 'w')
     scanner.TOKEN_FILE = open('tokens.txt', 'w')
     scanner.SYMBOL_FILE = open('symbol_table.txt', 'w')
+    parser.TREE_FILE = open('parse_tree.txt', 'w')
+    parser.SYNTAX_ERROR_FILE = open('syntax_error.txt', 'w')
+
     scanner.init_symbol_table()
 except (FileNotFoundError, PermissionError):
     print('Error while configuring files: No input.txt or insufficient process access')
