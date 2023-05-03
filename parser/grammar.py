@@ -1,4 +1,4 @@
-from typing import List, Set, Tuple, Dict
+from typing import List, Set, Dict
 
 START = 'Program'
 
@@ -141,7 +141,8 @@ grammar: List[str] = ["Program -> Declaration-list $",
                       "Var-call-prime -> ( Args ) | Var-prime",
                       "Var-prime -> [ Expression ] | epsilon",
                       "Factor-prime -> ( Args ) | epsilon",
-                      "Factor-zegond -> ( Expression ) | NUM", "Args -> Arg-list | epsilon",
+                      "Factor-zegond -> ( Expression ) | NUM",
+                      "Args -> Arg-list | epsilon",
                       "Arg-list -> Expression Arg-list-prime",
                       "Arg-list-prime -> , Expression Arg-list-prime | epsilon"]
 

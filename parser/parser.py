@@ -12,6 +12,8 @@ stack: List[Tuple[str, 'State', 'Node']] = []  # define stack to track the state
 current_position: Tuple[str, 'State']  # the current state of parsing diagram
 state_diagram_dict: Dict[str, 'State'] = {}  # the diagram of each non-terminal
 
+CORRECT_PROGRAM = True
+
 
 class State:
     total_state = itertools.count()
@@ -54,6 +56,15 @@ def add_node(edge: str, parent=None):
         n = Node(edge)
 
     return n
+
+
+def jump_forward(n_state: 'State', edge: 'str'):
+    global current_position
+
+    while not n_state.next_states:
+        edge, n_state, _ = stack.pop()
+
+    current_position = (edge, n_state)
 
 
 def move_forward(n_state: 'State', token: Tuple[str, str]):
@@ -126,8 +137,6 @@ def token_key(token: Tuple[str, str]):
 
 
 def select_next_move(position: Tuple[str, 'State'], token):
-    # define flag to know if parser move froward or move in
-
     for e, s in position[1].next_states:
         # compute the first set
         if is_terminal(e):
@@ -151,10 +160,52 @@ def select_next_move(position: Tuple[str, 'State'], token):
                     move_in(s, e)
                     return token
 
+    if len(position[1].next_states) > 1:
+        RuntimeError('impossible')
+
+    next_edge, next_state = position[1].next_states[0]
+
+    if token_key(token) == '$':
+        print_eof_error()
+        stack.clear()
+        return None
+
+    if is_terminal(next_edge):
+        print_missing_error(next_edge)
+        jump_forward(next_state, next_edge)
+        return token
+
+    else:
+        if token_key(token) in follow[next_edge]:
+            print_missing_error(next_edge)
+            jump_forward(next_state, next_edge)
+            return token
+        else:
+            print_illegal_error(token_key(token))
+            return None
+
 
 def print_tree(root):
     for pre, fill, node in RenderTree(root):
         print("%s%s" % (pre, node.name), file=TREE_FILE)
+
+
+def print_missing_error(missing_token: str):
+    print(f'#{scanner.get_current_line()} : syntax error, missing {missing_token}', file=SYNTAX_ERROR_FILE)
+    global CORRECT_PROGRAM
+    CORRECT_PROGRAM = False
+
+
+def print_illegal_error(illegal_token: str):
+    print(f'#{scanner.get_current_line()} : syntax error, illegal {illegal_token}', file=SYNTAX_ERROR_FILE)
+    global CORRECT_PROGRAM
+    CORRECT_PROGRAM = False
+
+
+def print_eof_error():
+    print(f'#{scanner.get_current_line() + 1} : syntax error, Unexpected EOF', file=SYNTAX_ERROR_FILE)
+    global CORRECT_PROGRAM
+    CORRECT_PROGRAM = False
 
 
 def run():

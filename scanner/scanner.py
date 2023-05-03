@@ -253,8 +253,8 @@ def write_to_file(file, last_lineno, content, line_num=None):
 
 def write_token():
     global last_token_line_number
-    write_to_file(TOKEN_FILE, last_token_line_number,
-                  '(' + token_type + ', ' + token_lexeme + ') ')
+    # write_to_file(TOKEN_FILE, last_token_line_number,
+    #               '(' + token_type + ', ' + token_lexeme + ') ')
     last_token_line_number = line_number
 
 
@@ -262,14 +262,14 @@ def write_error_with_prompt(prompt: str, line_num=None):
     global last_error_line_number
     if line_num is None:
         line_num = line_number
-    write_to_file(ERROR_FILE, last_error_line_number,
-                  '(' + build_string_from_buffer() + ', ' + prompt + ') ', line_num)
+    # write_to_file(ERROR_FILE, last_error_line_number,
+    #               '(' + build_string_from_buffer() + ', ' + prompt + ') ', line_num)
     last_error_line_number = line_num
 
 
 def add_new_symbol(sym):
     symbol_list.append(sym)
-    write_to_file(SYMBOL_FILE, None, str(len(symbol_list)) + '.\t' + sym + NEW_LINE)
+    # write_to_file(SYMBOL_FILE, None, str(len(symbol_list)) + '.\t' + sym + NEW_LINE)
 
 
 def report_invalid_number():
@@ -318,3 +318,7 @@ def add_symbol_token():
 def init_symbol_table():
     for kw in KEYWORDS:
         add_new_symbol(kw)
+
+
+def get_current_line():
+    return line_number
