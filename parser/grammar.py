@@ -1,8 +1,8 @@
-from typing import List, Set, Dict
+from typing import List, Set, Dict, Optional
 
 START = 'Program'
 
-productions: Dict[str, List[List[str]]] | None = None
+productions: Optional[Dict[str, List[List[str]]]] = None
 
 first: Dict[str, Set[str]] = {
     'Program': {';', '[', '(', 'int', 'void', 'epsilon'},

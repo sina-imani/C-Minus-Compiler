@@ -1,5 +1,5 @@
 import itertools
-from parser.grammar import get_structured_productions, START, is_terminal, first, follow
+from grammar import get_structured_productions, START, is_terminal, first, follow
 
 import scanner.scanner as scanner
 from anytree import Node, RenderTree
