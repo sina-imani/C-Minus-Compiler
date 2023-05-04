@@ -1,7 +1,7 @@
 # IAWT
 
-from scanner import scanner
-from parser import parser
+import parser
+import scanner
 
 # Setting files
 try:
@@ -17,7 +17,7 @@ except (FileNotFoundError, PermissionError):
 parser.run()
 
 try:
-    if parser.CORRECT_PROGRAM:
+    if parser.SYNTAX_CORRECT_PROGRAM:
         parser.SYNTAX_ERROR_FILE.write('There is no syntax error.')
 
     scanner.INPUT_FILE.close()

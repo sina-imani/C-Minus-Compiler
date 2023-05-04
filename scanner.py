@@ -4,8 +4,6 @@
 ## GLOBAL VARIABLES
 
 
-from codecs import readbuffer_encode
-
 NEW_LINE = '\r\n'
 SYMBOLS = [';', ':', ',', '[', ']', '(', ')', '{', '}', '+', '-', '*', '=', '<', '==']
 WHITE_SPACES = [' ', '\n', '\r', '\t', '\v', '\f']
