@@ -1,0 +1,31 @@
+IAWT
+
+Additive-expression (allocates temporaries)
+Term +- Term +- ... +- Term
+
+Term
+Factor * Factor * ... * Factor
+
+Factor
+(Expression) | ID (Args) | ID [Expression] | NUM
+
+Factor-zegond
+(Expression) | NUM
+
+Term-zegond
+Factor-zegond * Factor * Factor * ... * Factor
+
+Additive-expression-zegond
+Term-zegond +- Term +- Term +- ... +- Term
+
+Simple-expression-zegond
+Additive-expression-zegond ((< | ==) Additive-expression)?
+
+
+Expression
+Simple-expression-zegond | ID ([Expression])? = Expression
+| ID [Expression] * Factor * ... * Factor + Term + ... + Term
+| ID ((Args))? * Factor * ... * Factor + Term + ... + Term
+
+Args
+Expression, Expression, ..., Expression

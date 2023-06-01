@@ -1,0 +1,95 @@
+IAWT
+
+
+#pnext		(push the next token)
+t = nexttemp()
+type, index = get_next_token()
+if type == ID:
+	PB[i++] = (ASSIGN, SYMBOL_TABLE[index].address, t)
+elif type == NUM:
+	PB[i++] = (ASSIGN, #NUM, t)
+else: ERROR
+push(t)
+
+#pid		(push id)
+type, index = get_next_token()
+push(SYMBOL_TABLE[index].address)
+
+#pplus		(push the + sign)
+push(0)
+
+#pminus 	(push the - sign)
+push(1)
+
+#pless		(push the < sign)
+push(2)
+
+#peq		(push the == sign)
+push(3)
+
+#assign
+ss:	..., &a, t
+	...
+t, a = pop(2)
+PB[i++] = (ASSIGN, a, t)
+
+#assign_arr	(assign to a certain index of some array)
+ss:	..., &a, t1, t2
+	...
+t2, t1, &a = pop(3)
+PB[i++] = (MULT, t1, #4, t1)
+PB[i++] = (ADD, t1, &a, t1)
+PB[i++] = (ASSIGN, t2, @t1)
+
+#do_op	(do the operation)
+ss:	..., t1, op, t2
+	..., t1
+t2 = pop()
+op = pop()
+t1 = pop()
+if (op == 0)  # addition
+	PB[i++] = (ADD, t1, t2, t1)
+if (op == 1)  # subtraction
+	PB[i++] = (SUB, t1, t2, t1)
+if (op == 2)  # less 
+	PB[i++] = (LT, t1, t2, t1)
+if (op == 3)  # equal
+	PB[i++] = (EQ, t1, t2, t1)
+push(t1)
+
+#do_mult	(do multiplication)
+ss:	..., t1, t2
+	..., t1
+t2, t1 = pop(2)
+PB[i++] = (MULT, t1, t2, t1)
+push(t1)
+		
+#eval_ind	(evaluate array cell using the given index)
+ss:	..., t1, t2
+	..., t1
+t1, t2 = ss[top-1], ss[top]
+PB[i++] = (MULT, t2, #4, t2)
+PB[i++] = (ADD, t1, t2, t1) #todo: t1 += 4 * t2
+PB[i++] = (ASSIGN, @t1, t1)
+pop()
+
+#eval_ind_orig	(evaluate array cell using the given index, where the array address is NOT a temporary)
+ss:	..., &a, t
+	..., t
+t, &a = pop(2)
+PB[i++] = (MULT, t, #4, t)
+PB[i++] = (ADD, t, &a, t)
+PB[i++] = (ASSIGN, @t, t)
+push(t)
+
+
+
+100	a=200
+104	b=1
+...
+200	2
+204	5
+208	9
+...
+512(t1)	200
+516(t2)	1
