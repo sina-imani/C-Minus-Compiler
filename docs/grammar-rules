@@ -28,10 +28,10 @@ Statement Selection_stmt
 Statement Iteration_stmt
 Statement Return_stmt
 Expression_stmt Expression ;
-Expression_stmt break ;
+Expression_stmt #break break ;
 Expression_stmt ;
-Selection_stmt if ( Expression ) Statement else Statement
-Iteration_stmt repeat Statement until ( Expression )
+Selection_stmt if ( Expression ) #make_patch Statement #make_patch else Statement #end_if
+Iteration_stmt repeat #push_i Statement until ( Expression ) #end_repeat
 Return_stmt return Return_stmt_prime
 Return_stmt_prime ;
 Return_stmt_prime Expression ;
@@ -39,7 +39,7 @@ Expression Simple_expression_zegond
 Expression #pid ID B
 B = Expression #assign
 B [ Expression ] H
-B Simple_expression_prime
+B #temp_exch Simple_expression_prime
 H = Expression #assign_arr
 H #eval_ind_orig G D C
 Simple_expression_zegond Additive_expression_zegond C
@@ -63,11 +63,11 @@ G
 Factor ( Expression )
 Factor #pnext ID Var_call_prime
 Factor #pnext NUM
-Var_call_prime ( Args ) #call_func
+Var_call_prime ( Args ) 
 Var_call_prime Var_prime
 Var_prime 
 Var_prime [ Expression ] #eval_ind
-Factor_prime ( Args ) #call_func
+Factor_prime ( Args ) #call_output
 Factor_prime 
 Factor_zegond ( Expression )
 Factor_zegond #pnext NUM
@@ -76,15 +76,3 @@ Args
 Arg_list Expression Arg_list_prime
 Arg_list_prime , Expression Arg_list_prime
 Arg_list_prime 
-
-x = a * b + c * d + e * f
-
-+ * a b * c d
-t1 = a
-t1 *= b
-t2 = c
-t2 *= d
-t1 += t2
-t2 = e
-t2 *= f
-t1 += t2
