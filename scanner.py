@@ -1,5 +1,5 @@
 # IAWT
-
+import enum
 
 ## GLOBAL VARIABLES
 
@@ -12,6 +12,9 @@ INPUT_FILE = None
 ERROR_FILE = None
 TOKEN_FILE = None
 SYMBOL_FILE = None
+MAX_CODE_LENGTH = 300
+MAX_DATA_LENGTH = 1600
+TEMP_OFFSET = MAX_CODE_LENGTH + MAX_DATA_LENGTH
 
 symbol_list = []
 save_in_buffer = True
@@ -23,6 +26,38 @@ token_lexeme = ''
 token_type = ''
 last_token_line_number = 0
 last_error_line_number = 0
+declaration_mode = None
+last_kw = None
+scope_stack = []
+first_empty_data = MAX_CODE_LENGTH
+
+
+## CLASSES AND ENUMS
+class DeclarationMode(enum.Enum):
+    Disabled = 0
+    Name = 1
+    Parameter = 2
+
+class IdentifierType(enum.Enum):
+    void = 0
+    int = 1
+    int_array = 2
+
+class SymbolTableEntry():
+    def __init__(self):
+        global first_empty_data
+        self.lexeme = None
+        self.id_type = None
+        self.is_function = False
+        self.parameter_list = []        # types of parameters, respectively
+        if declaration_mode == DeclarationMode.Name:
+            self.address = first_empty_data
+            first_empty_data += 4
+        symbol_list.append(self)
+
+
+declaration_mode = DeclarationMode.Disabled
+symbol_list : list[SymbolTableEntry] = []
 
 
 ## FUNCTIONS
@@ -265,10 +300,6 @@ def write_error_with_prompt(prompt: str, line_num=None):
     last_error_line_number = line_num
 
 
-def add_new_symbol(sym):
-    symbol_list.append(sym)
-    # write_to_file(SYMBOL_FILE, None, str(len(symbol_list)) + '.\t' + sym + NEW_LINE)
-
 
 def report_invalid_number():
     write_error_with_prompt("Invalid number")
@@ -300,9 +331,22 @@ def add_number_token():
 def add_id_kw_token():
     global token_lexeme, token_type
     token_lexeme = build_string_from_buffer()
-    token_type = 'KEYWORD' if token_lexeme in KEYWORDS else 'ID'
-    if not token_lexeme in symbol_list:
-        add_new_symbol(token_lexeme)
+    if declaration_mode == DeclarationMode.Name:    
+        if token_lexeme == 'void':
+            symbol_list[-1].id_type = IdentifierType.void
+        elif token_lexeme == 'int':
+            symbol_list[-1].id_type = IdentifierType.int
+        elif not token_lexeme in KEYWORDS:
+            symbol_list[-1].lexeme = token_lexeme
+    elif declaration_mode == DeclarationMode.Parameter:
+        if token_lexeme == 'int':
+            new_parameter = SymbolTableEntry()
+            new_parameter.id_type = IdentifierType.int
+            symbol_list[scope_stack[-1] - 1].parameter_list.append(new_parameter.id_type)
+        elif token_lexeme not in KEYWORDS:
+            symbol_list[-1].lexeme = token_lexeme
+
+        
     write_token()
 
 
@@ -310,13 +354,43 @@ def add_symbol_token():
     global token_lexeme, token_type
     token_lexeme = build_string_from_buffer()
     token_type = 'SYMBOL'
+    if token_lexeme == '[' and \
+        declaration_mode in [DeclarationMode.Name, DeclarationMode.Parameter]:
+            symbol_list[-1].id_type = IdentifierType.int_array
+            if declaration_mode == DeclarationMode.Parameter:
+                symbol_list[scope_stack[-1] - 1].parameter_list[-1] = IdentifierType.int_array
+            
     write_token()
 
 
 def init_symbol_table():
     for kw in KEYWORDS:
-        add_new_symbol(kw)
+        symbol_list.append(kw)
+    output_function = SymbolTableEntry()
+    output_function.id_type = IdentifierType.void
+    output_function.lexeme = 'output'
+    output_function.is_function = True
+    output_function.parameter_list.append(IdentifierType.int)
 
 
 def get_current_line():
     return line_number
+
+
+# Symbol table management
+def set_declaration_mode(mode):
+    global declaration_mode
+    declaration_mode = mode
+
+def start_declaration():
+    set_declaration_mode(DeclarationMode.Name)
+    SymbolTableEntry()
+    
+
+def start_params():
+    set_declaration_mode(DeclarationMode.Parameter)
+    symbol_list[-1].is_function = True
+    scope_stack.append(len(symbol_list))
+
+def end_scope():
+    symbol_list = symbol_list[:scope_stack[-1]]

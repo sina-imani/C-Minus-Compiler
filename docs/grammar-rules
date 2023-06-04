@@ -2,14 +2,13 @@ IAWT
 Program Declaration_list
 Declaration_list Declaration Declaration_list
 Declaration_list 
-Declaration Declaration_initial
-Declaration Declaration_prime
+Declaration #start_declaration Declaration_initial Declaration_prime
 Declaration_initial Type_specifier ID
 Declaration_prime Fun_declaration_prime
-Declaration_prime Var_declaration_prime
+Declaration_prime Var_declaration_prime #end_declaration
 Var_declaration_prime ;
 Var_declaration_prime [ NUM ] ;
-Fun_declaration_prime ( Params ) Compound_stmt
+Fun_declaration_prime #start_params ( Params ) #end_declaration Compound_stmt #end_scope
 Type_specifier int
 Type_specifier void
 Params int ID Param_prime Param_list

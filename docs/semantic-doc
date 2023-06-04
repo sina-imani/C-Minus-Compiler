@@ -145,3 +145,16 @@ PB[i++] = (JPF, t, a)
 ss:	..., a
 	...
 PB[i++] = (PRINT, pop())
+
+
+#start_declaration
+scanner.start_declaration()
+
+#start_params
+scanner.start_params()
+
+#end_declaration
+scanner.set_declaration_mode(DISABLE)
+
+#end_scope
+scanner.end_scope()
