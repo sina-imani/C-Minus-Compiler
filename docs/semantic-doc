@@ -109,9 +109,6 @@ push(t)
 push(i)
 i++
 
-#push_i
-push(i)
-
 #end_if
 ss:	..., t, 1, 3	(see the schematic)
 	...
@@ -123,21 +120,43 @@ schematic:
 4.	code to be executed when cond is false
 5.
 
-
 a2, a1, t = pop(3)
 PB[a2] = (JP, i)
 PB[a1] = (JPF, t, a2+1)
 
 
+#start_repeat
+ss: ...
+	..., i, 0
+push(i)
+push(0)
+
+#break
+ss:	..., i, b_1, ..., b_n, n
+	..., i, b_1, ..., b_n, b_n+1, n+1
+n = pop()
+push(i++)
+push(n+1)
+
 #end_repeat
-ss:	..., 0, t	(see the schematic)
-	...
+ss:	..., 0, b1=1, b2=3, 2, t	(see the schematic)
+...
 schematic:
 0.	code of statement
-1.	t = value of expression
-2.	JPF (t, 0)
+1.	break;
+2.	code of statement
+3.	break;
+4.	code of statement
+5.	t = value of expression
+6.	JPF (t, 0)
+7.
 
-a, t = pop(2)
+t = pop()
+break_cnt = pop()
+for i in range(break_cnt):
+	break_addr = pop()
+	PB[break_addr] = (JP, i+1)
+a = pop()
 PB[i++] = (JPF, t, a)
 
 
@@ -147,7 +166,7 @@ ss:	..., a
 PB[i++] = (PRINT, pop())
 
 
-#start_declaration
+#start_declaration		
 scanner.start_declaration()
 
 #start_params

@@ -30,7 +30,7 @@ Expression_stmt Expression ;
 Expression_stmt #break break ;
 Expression_stmt ;
 Selection_stmt if ( Expression ) #make_patch Statement #make_patch else Statement #end_if
-Iteration_stmt repeat #push_i Statement until ( Expression ) #end_repeat
+Iteration_stmt repeat #start_repeat Statement until ( Expression ) #end_repeat
 Return_stmt return Return_stmt_prime
 Return_stmt_prime ;
 Return_stmt_prime Expression ;

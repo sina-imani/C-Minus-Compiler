@@ -5,6 +5,7 @@ from anytree import Node, RenderTree
 
 import scanner as scanner
 from grammar import get_structured_productions, START, is_terminal, first, follow
+from code_maker import do_action
 
 TREE_FILE = None  # file which the tree is written to
 SYNTAX_ERROR_FILE = None  # file which the syntax errors are written to
@@ -22,6 +23,7 @@ class State:
     def __init__(self):
         self.id_s = next(State.total_state)
         self.next_states = []
+        self.action_routine = None
 
     def add_next_state(self, edge: str, next_state: 'State') -> None:
         self.next_states.append((edge, next_state))
@@ -71,6 +73,9 @@ def create_diagram(non_terminal: str, production_rules: List[List[str]]) -> None
         for edge in production:
             # Create a new state for the next edge in the production rule
             next_state = State()
+            if (edge[0] == '#'):
+                # TODO : This state is associated with an action symbol
+                next_state.action_routine = edge
             # Add a transition from the previous state to the next state using the current edge
             prev.add_next_state(edge, next_state)
             # Update the previous state to be the current state
