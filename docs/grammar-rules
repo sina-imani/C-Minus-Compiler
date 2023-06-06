@@ -35,7 +35,7 @@ Return_stmt return Return_stmt_prime
 Return_stmt_prime ;
 Return_stmt_prime Expression ;
 Expression Simple_expression_zegond
-Expression #pid ID B
+Expression ID #pid B
 B = Expression #assign
 B [ Expression ] H
 B #temp_exch Simple_expression_prime
@@ -60,8 +60,8 @@ Term_zegond Factor_zegond G
 G * Factor #do_mult_op G
 G 
 Factor ( Expression )
-Factor #pnext ID Var_call_prime
-Factor #pnext NUM
+Factor ID #ptoken Var_call_prime
+Factor NUM #ptoken
 Var_call_prime ( Args ) 
 Var_call_prime Var_prime
 Var_prime 
@@ -69,7 +69,7 @@ Var_prime [ Expression ] #eval_ind
 Factor_prime ( Args ) #call_output
 Factor_prime 
 Factor_zegond ( Expression )
-Factor_zegond #pnext NUM
+Factor_zegond NUM #ptoken
 Args Arg_list
 Args 
 Arg_list Expression Arg_list_prime

@@ -1,9 +1,9 @@
 IAWT
 
 
-#pnext		(push the next token)
+#ptoken		(push the just-seen token)
 t = nexttemp()
-type, index = get_next_token()
+type, index = scanner.get_last_token()
 if type == ID:
 	PB[i++] = (ASSIGN, SYMBOL_TABLE[index].address, t)
 elif type == NUM:
