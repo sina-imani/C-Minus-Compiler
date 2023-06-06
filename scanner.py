@@ -1,5 +1,6 @@
 # IAWT
 import enum
+import code_maker
 
 ## GLOBAL VARIABLES
 
@@ -28,7 +29,7 @@ last_error_line_number = 0
 declaration_mode = None
 last_kw = None
 scope_stack = []
-first_empty_data = MAX_CODE_LENGTH
+first_empty_data = code_maker.MAX_CODE_LENGTH
 
 
 ## CLASSES AND ENUMS
