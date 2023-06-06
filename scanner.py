@@ -3,7 +3,7 @@ import enum
 
 ## GLOBAL VARIABLES
 
-
+SILENT_MODE = True      # Silent mode turned on means that no lexical error will be reported in the corresponding file
 NEW_LINE = '\r\n'
 SYMBOLS = [';', ':', ',', '[', ']', '(', ')', '{', '}', '+', '-', '*', '=', '<', '==']
 WHITE_SPACES = [' ', '\n', '\r', '\t', '\v', '\f']
@@ -12,9 +12,6 @@ INPUT_FILE = None
 ERROR_FILE = None
 TOKEN_FILE = None
 SYMBOL_FILE = None
-MAX_CODE_LENGTH = 300
-MAX_DATA_LENGTH = 1600
-TEMP_OFFSET = MAX_CODE_LENGTH + MAX_DATA_LENGTH
 
 symbol_list = []
 save_in_buffer = True
@@ -24,6 +21,8 @@ read_buffer = []
 line_number = 1
 token_lexeme = ''
 token_type = ''
+last_token_lexem = ''
+last_token_type = ''
 last_token_line_number = 0
 last_error_line_number = 0
 declaration_mode = None
@@ -238,6 +237,13 @@ def extract_whitespace():
     return True
 
 
+def update_last_token():
+    global last_token_type, last_token_lexem
+    last_token_lexem = token_lexeme
+    last_token_type = token_type
+    return token_type, token_lexeme
+
+
 # Token extraction entry
 
 
@@ -253,11 +259,11 @@ def get_next_token():
     unread_last_char()
     token_type = ''
     token_lexeme = ''
-    if extract_number(): return token_type, token_lexeme
-    if extract_id_kw(): return token_type, token_lexeme
-    if extract_symbol(): return token_type, token_lexeme
-    if extract_whitespace() or extract_comment(): return get_next_token()  # TODO this line can be problematic. we
-    # will change it if the break anything
+    if extract_number(): return update_last_token()
+    if extract_id_kw(): return update_last_token()
+    if extract_symbol(): return update_last_token()
+    if extract_whitespace() or extract_comment():
+        return get_next_token()  # TODO this line can be problematic. we will change it if it breaks anything.
     print("UNREACHABLE PRINT STATEMENT")
     return True
 
@@ -273,6 +279,8 @@ def build_string_from_buffer():
 
 
 def write_to_file(file, last_lineno, content, line_num=None):
+    if SILENT_MODE:
+        return
     if file is None or not file.writable():
         return
     if line_num is None:
@@ -295,8 +303,8 @@ def write_error_with_prompt(prompt: str, line_num=None):
     global last_error_line_number
     if line_num is None:
         line_num = line_number
-    # write_to_file(ERROR_FILE, last_error_line_number,
-    #               '(' + build_string_from_buffer() + ', ' + prompt + ') ', line_num)
+    write_to_file(ERROR_FILE, last_error_line_number,
+                   '(' + build_string_from_buffer() + ', ' + prompt + ') ', line_num)
     last_error_line_number = line_num
 
 
@@ -364,8 +372,6 @@ def add_symbol_token():
 
 
 def init_symbol_table():
-    for kw in KEYWORDS:
-        symbol_list.append(kw)
     output_function = SymbolTableEntry()
     output_function.id_type = IdentifierType.void
     output_function.lexeme = 'output'
@@ -376,6 +382,28 @@ def init_symbol_table():
 def get_current_line():
     return line_number
 
+def get_last_token():
+    return last_token_type, last_token_lexem
+
+def symbol_table_lookup(lexeme : str):
+    """
+    Looks up the symbol table for an ID with lexeme
+    equal to LEXEME. Returns its index if it is found, -1 otherwise
+    Input
+
+    Args:
+        lexeme : The string which is to mach some entry's lexeme in symbol table.
+    
+    Returns:
+        The index of entry in symbol table with that lexeme, or -1 if no such 
+        entry exists.
+    """
+
+    for i in range(len(symbol_list)):
+        if symbol_list[i].lexeme == lexeme:
+            return i
+        
+    return -1
 
 # Symbol table management
 def set_declaration_mode(mode):
