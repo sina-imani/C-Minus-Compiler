@@ -10,9 +10,8 @@ MAX_DATA_LENGTH = 1600
 TEMP_OFFSET = MAX_CODE_LENGTH + MAX_DATA_LENGTH
 
 semantic_stack = []
-i : int = 0
 last_temp = TEMP_OFFSET
-PB = open('')
+PB = []
 
 
 # FUNCTIONS
@@ -22,18 +21,16 @@ def next_temp():
     return last_temp - 1
 
 def generate_code(operation : str, *components):
-    global i
-    PB.write(str(i))
-    PB.write('\t(' + operation)
+    PB[-1] = str(i)
+    PB[-1] += '\t(' + operation
     for j in range(3):
         if j < len(components):
-            PB.write(', ' + str(components[j]))
+            PB[-1] += ', ' + str(components[j])
         elif j < 2:
-            PB.write(',  ')
+            PB[-1] += (',  ')
         else:
-            PB.write(',   ')
-    PB.write(')\n')
-    i += 1
+            PB[-1] += ',   '
+    PB[-1] += ')'
 
 def ptoken():
     t = next_temp()
@@ -121,22 +118,39 @@ def eval_ind_orig():
     semantic_stack.append(t)
 
 def make_patch():
-    pass
+    semantic_stack.append(len(PB))
+    PB.append('')
 
 def end_if():
-    pass
+    a2 = semantic_stack.pop()
+    a1 = semantic_stack.pop()
+    t = semantic_stack.pop()
+    PB[a2] = f'(JP, {len(PB)},  ,   )'
+    PB[a1] = f'(JPF, {t}, {a2+1},   )'
 
 def start_repeat():
-    pass
+    semantic_stack.append(len(PB))
+    semantic_stack.append(0)
 
 def brk():
-    pass
+    n = semantic_stack.pop()
+    semantic_stack.append(len(PB))
+    semantic_stack.append(n + 1)
+    PB.append('')
+
 
 def end_repeat():
-    pass
+    t = semantic_stack.pop()
+    break_cnt = semantic_stack.pop()
+    for _ in range(break_cnt):
+        break_addr = semantic_stack.pop()
+        PB[break_addr] = f'(JP, {len(PB) + 1},  ,   )'
+    a = semantic_stack.pop()
+    generate_code('JPF', t, a)
 
 def call_output():
-    pass
+    a = semantic_stack.pop()
+    generate_code('PRINT', a)
 
 def do_action(action_symbol : str):
     eval(action_symbol[1:] + '()')
