@@ -20,7 +20,7 @@ pop()
 push(t)
 
 #pid		(push id)
-type, index = get_next_token()
+type, index = scanner.get_last_token()
 push(SYMBOL_TABLE[index].address)
 
 #pplus		(push the + sign)

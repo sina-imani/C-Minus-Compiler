@@ -47,8 +47,10 @@ def ptoken():
 
 
 def temp_exch():
-    t = next_temp()
     a = semantic_stack.pop()
+    if a == 'function':
+        return
+    t = next_temp()
     generate_code('ASSIGN', a, t)
     semantic_stack.append(t)
 
@@ -59,7 +61,10 @@ def pid():
     sym_index = scanner.symbol_table_lookup(last_lexeme)
     if sym_index == -1:
         raise Exception("code maker : cannot find symbol with lexeme " + last_lexeme)
-    semantic_stack.append(scanner.symbol_list[sym_index].address)
+    if scanner.symbol_list[sym_index].is_function:
+        semantic_stack.append('function')
+    else:
+        semantic_stack.append(scanner.symbol_list[sym_index].address)
 
 def pplus():
     semantic_stack.append('ADD')
