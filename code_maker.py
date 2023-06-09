@@ -14,20 +14,21 @@ PB = []
 # FUNCTIONS
 def next_temp():
     global last_temp
-    last_temp += 1
-    return last_temp - 1
+    last_temp += 4
+    return last_temp - 4
 
 def generate_code(operation : str, *components):
-    PB[-1] = str(len(PB))
-    PB[-1] += '\t(' + operation
+    new_code = str(len(PB))
+    new_code += '\t(' + operation
     for j in range(3):
         if j < len(components):
-            PB[-1] += ', ' + str(components[j])
+            new_code += ', ' + str(components[j])
         elif j < 2:
-            PB[-1] += (',  ')
+            new_code += (',  ')
         else:
-            PB[-1] += ',   '
-    PB[-1] += ')'
+            new_code += ',   '
+    new_code += ')'
+    PB.append(new_code)
 
 def ptoken():
     t = next_temp()
@@ -55,10 +56,10 @@ def pid():
     last_type, last_lexeme = scanner.get_last_token()
     if last_type != 'ID':
         raise Exception("code maker : last token type expected to be ID, but was " + last_type)
-    sym_address = scanner.symbol_table_lookup(last_lexeme)
-    if sym_address == -1:
+    sym_index = scanner.symbol_table_lookup(last_lexeme)
+    if sym_index == -1:
         raise Exception("code maker : cannot find symbol with lexeme " + last_lexeme)
-    semantic_stack.append(sym_address)
+    semantic_stack.append(scanner.symbol_list[sym_index].address)
 
 def pplus():
     semantic_stack.append('ADD')
@@ -149,5 +150,17 @@ def call_output():
     a = semantic_stack.pop()
     generate_code('PRINT', a)
 
+def start_declaration():
+    scanner.start_declaration()
+
+def start_params():
+    scanner.start_params()
+
+def end_declaration():
+    scanner.set_declaration_mode(scanner.DeclarationMode.Disabled)
+
+def end_scope():
+    scanner.end_scope()
+
 def do_action(action_symbol : str):
-    eval(action_symbol[1:] + '()')
+    eval(action_symbol[1:].replace('-', '_') + '()')

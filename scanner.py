@@ -416,7 +416,13 @@ def set_declaration_mode(mode):
 
 def start_declaration():
     set_declaration_mode(DeclarationMode.Name)
-    SymbolTableEntry()
+    new_entry = SymbolTableEntry()
+    if last_token_lexem == 'int':
+        new_entry.id_type = IdentifierType.int
+    elif last_token_lexem == 'void':
+        new_entry.id_type = IdentifierType.void
+    else:
+        raise Exception("Inappropriate type specification")
     
 
 def start_params():

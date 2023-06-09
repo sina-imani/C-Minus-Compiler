@@ -95,6 +95,7 @@ def create_diagram(non_terminal: str, production_rules: List[List[str]]) -> None
             prev = next_state
             last_action_symbol = ''
         prev.latter_action_symbol = last_action_symbol
+        last_action_symbol = ''
 
     # Store the resulting state diagram in the 'state_diagram_dict' dictionary
     state_diagram_dict[non_terminal] = start_state
