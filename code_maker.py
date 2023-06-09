@@ -5,12 +5,9 @@ import scanner
 
 # VARIABLES
 PB = None
-MAX_CODE_LENGTH = 300
-MAX_DATA_LENGTH = 1600
-TEMP_OFFSET = MAX_CODE_LENGTH + MAX_DATA_LENGTH
 
 semantic_stack = []
-last_temp = TEMP_OFFSET
+last_temp = scanner.TEMP_OFFSET
 PB = []
 
 
@@ -21,7 +18,7 @@ def next_temp():
     return last_temp - 1
 
 def generate_code(operation : str, *components):
-    PB[-1] = str(i)
+    PB[-1] = str(len(PB))
     PB[-1] += '\t(' + operation
     for j in range(3):
         if j < len(components):
@@ -40,11 +37,11 @@ def ptoken():
     elif last_type == 'ID':
         sym_index = scanner.symbol_table_lookup(last_lexeme)
         if sym_index == -1:
-            raise "code maker : cannot find symbol with lexeme " + last_lexeme
+            raise Exception("code maker : cannot find symbol with lexeme " + last_lexeme)
         sym_address = scanner.symbol_list[sym_index].address
         generate_code('ASSIGN', sym_address, t)
     else:
-        raise "code maker : token to be pushed is not either of type NUM nor ID"
+        raise Exception("code maker : token to be pushed is not either of type NUM nor ID")
     semantic_stack.append(t)
 
 
@@ -57,10 +54,10 @@ def temp_exch():
 def pid():
     last_type, last_lexeme = scanner.get_last_token()
     if last_type != 'ID':
-        raise "code maker : last token type expected to be ID, but was " + last_type
+        raise Exception("code maker : last token type expected to be ID, but was " + last_type)
     sym_address = scanner.symbol_table_lookup(last_lexeme)
     if sym_address == -1:
-        raise "code maker : cannot find symbol with lexeme " + last_lexeme
+        raise Exception("code maker : cannot find symbol with lexeme " + last_lexeme)
     semantic_stack.append(sym_address)
 
 def pplus():

@@ -1,6 +1,5 @@
 # IAWT
 import enum
-import code_maker
 
 ## GLOBAL VARIABLES
 
@@ -29,7 +28,10 @@ last_error_line_number = 0
 declaration_mode = None
 last_kw = None
 scope_stack = []
-first_empty_data = code_maker.MAX_CODE_LENGTH
+MAX_CODE_LENGTH = 300
+MAX_DATA_LENGTH = 1600
+TEMP_OFFSET = MAX_CODE_LENGTH + MAX_DATA_LENGTH
+first_empty_data = MAX_CODE_LENGTH
 
 
 ## CLASSES AND ENUMS
@@ -46,8 +48,8 @@ class IdentifierType(enum.Enum):
 class SymbolTableEntry():
     def __init__(self):
         global first_empty_data
-        self.lexeme = None
-        self.id_type = None
+        self.lexeme = ''
+        self.id_type = IdentifierType.void
         self.is_function = False
         self.parameter_list = []        # types of parameters, respectively
         if declaration_mode == DeclarationMode.Name:
@@ -340,6 +342,7 @@ def add_number_token():
 def add_id_kw_token():
     global token_lexeme, token_type
     token_lexeme = build_string_from_buffer()
+    token_type = 'KEYWORD' if token_lexeme in KEYWORDS else 'ID'
     if declaration_mode == DeclarationMode.Name:    
         if token_lexeme == 'void':
             symbol_list[-1].id_type = IdentifierType.void
@@ -422,4 +425,5 @@ def start_params():
     scope_stack.append(len(symbol_list))
 
 def end_scope():
+    global symbol_list
     symbol_list = symbol_list[:scope_stack[-1]]

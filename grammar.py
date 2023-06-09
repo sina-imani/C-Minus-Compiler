@@ -164,11 +164,12 @@ def get_productions(non_terminal: str) -> str:
     for p in grammar:
         if p.split()[0] == non_terminal:
             return p
+    return ''
 
 
 def find_first(symbol: str, productions: Dict[str, List[List[str]]]) -> Set[str]:
     """
-    Find first set of str symbol give the production rules
+    Find first set of str symbol given the production rules
     :param symbol:
     :param productions:
     :return:
