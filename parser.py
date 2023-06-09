@@ -4,8 +4,8 @@ from typing import List, Tuple, Dict, Set
 from anytree import Node, RenderTree
 
 import scanner as scanner
-from grammar import get_structured_productions, START, is_terminal, first, follow
 from code_maker import do_action
+from grammar import get_structured_productions, START, is_terminal, first, follow
 
 TREE_FILE = None  # file which the tree is written to
 SYNTAX_ERROR_FILE = None  # file which the syntax errors are written to
@@ -85,7 +85,7 @@ def create_diagram(non_terminal: str, production_rules: List[List[str]]) -> None
     state_diagram_dict[non_terminal] = start_state
 
 
-def add_node(symbol: str, parent: 'Node' = None) -> Node: # type: ignore
+def add_node(symbol: str, parent: 'Node' = None) -> Node:  # type: ignore
     """
     This function creates a new node with the given symbol and parent node (if provided).
     It returns the newly created node.
@@ -273,6 +273,11 @@ def select_next_move(position: Tuple[str, 'State'], token):
     Returns:
         A tuple representing the next position in the state diagram and the token that was processed.
     """
+
+    # check if token is an action symbol
+    if token[0] == '#':
+        do_action(token)
+
     for e, s in position[1].next_states:
         # compute the first set
         if is_terminal(e):
