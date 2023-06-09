@@ -2,7 +2,6 @@
 
 import scanner
 
-
 # VARIABLES
 PB = None
 MAX_CODE_LENGTH = 300
@@ -20,17 +19,19 @@ def next_temp():
     last_temp += 1
     return last_temp - 1
 
-def generate_code(operation : str, *components):
+
+def generate_code(operation: str, *components):
     PB[-1] = str(i)
     PB[-1] += '\t(' + operation
     for j in range(3):
         if j < len(components):
             PB[-1] += ', ' + str(components[j])
         elif j < 2:
-            PB[-1] += (',  ')
+            PB[-1] += ',  '
         else:
             PB[-1] += ',   '
     PB[-1] += ')'
+
 
 def ptoken():
     t = next_temp()
@@ -54,6 +55,7 @@ def temp_exch():
     generate_code('ASSIGN', a, t)
     semantic_stack.append(t)
 
+
 def pid():
     last_type, last_lexeme = scanner.get_last_token()
     if last_type != 'ID':
@@ -63,30 +65,37 @@ def pid():
         raise "code maker : cannot find symbol with lexeme " + last_lexeme
     semantic_stack.append(sym_address)
 
+
 def pplus():
     semantic_stack.append('ADD')
+
 
 def pminus():
     semantic_stack.append('SUB')
 
+
 def pless():
     semantic_stack.append('LT')
 
+
 def peq():
     semantic_stack.append('EQ')
+
 
 def assign():
     t = semantic_stack.pop()
     a = semantic_stack.pop()
     generate_code('ASSIGN', t, a)
 
+
 def assign_arr():
     val = semantic_stack.pop()
     ind = semantic_stack.pop()
-    a  = semantic_stack.pop()
+    a = semantic_stack.pop()
     generate_code('MULT', ind, '#4', ind)
     generate_code('ADD', a, ind, ind)
     generate_code('ASSIGN', val, '@' + str(ind))
+
 
 def do_op():
     t2 = semantic_stack.pop()
@@ -95,11 +104,13 @@ def do_op():
     generate_code(op, t1, t2, t1)
     semantic_stack.append(t1)
 
+
 def do_mult():
     t2 = semantic_stack.pop()
     t1 = semantic_stack.pop()
     generate_code('MULT', t1, t2, t1)
     semantic_stack.append(t1)
+
 
 def eval_ind():
     ind = semantic_stack.pop()
@@ -117,20 +128,24 @@ def eval_ind_orig():
     generate_code('ASSIGN', '@' + str(t), t)
     semantic_stack.append(t)
 
+
 def make_patch():
     semantic_stack.append(len(PB))
     PB.append('')
+
 
 def end_if():
     a2 = semantic_stack.pop()
     a1 = semantic_stack.pop()
     t = semantic_stack.pop()
     PB[a2] = f'(JP, {len(PB)},  ,   )'
-    PB[a1] = f'(JPF, {t}, {a2+1},   )'
+    PB[a1] = f'(JPF, {t}, {a2 + 1},   )'
+
 
 def start_repeat():
     semantic_stack.append(len(PB))
     semantic_stack.append(0)
+
 
 def brk():
     n = semantic_stack.pop()
@@ -148,9 +163,11 @@ def end_repeat():
     a = semantic_stack.pop()
     generate_code('JPF', t, a)
 
+
 def call_output():
     a = semantic_stack.pop()
     generate_code('PRINT', a)
 
-def do_action(action_symbol : str):
+
+def do_action(action_symbol: str):
     eval(action_symbol[1:] + '()')

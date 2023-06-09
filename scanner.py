@@ -1,5 +1,6 @@
 # IAWT
 import enum
+
 import code_maker
 
 ## GLOBAL VARIABLES
@@ -45,7 +46,7 @@ class IdentifierType(enum.Enum):
     int_array = 2
 
 
-class SymbolTableEntry():
+class SymbolTableEntry:
     def __init__(self):
         global first_empty_data
         self.lexeme = None
