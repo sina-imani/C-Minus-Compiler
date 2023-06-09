@@ -4,7 +4,7 @@ import code_maker
 
 ## GLOBAL VARIABLES
 
-SILENT_MODE = True      # Silent mode turned on means that no lexical error will be reported in the corresponding file
+SILENT_MODE = True  # Silent mode turned on means that no lexical error will be reported in the corresponding file
 NEW_LINE = '\r\n'
 SYMBOLS = [';', ':', ',', '[', ']', '(', ')', '{', '}', '+', '-', '*', '=', '<', '==']
 WHITE_SPACES = [' ', '\n', '\r', '\t', '\v', '\f']
@@ -38,10 +38,12 @@ class DeclarationMode(enum.Enum):
     Name = 1
     Parameter = 2
 
+
 class IdentifierType(enum.Enum):
     void = 0
     int = 1
     int_array = 2
+
 
 class SymbolTableEntry():
     def __init__(self):
@@ -49,7 +51,7 @@ class SymbolTableEntry():
         self.lexeme = None
         self.id_type = None
         self.is_function = False
-        self.parameter_list = []        # types of parameters, respectively
+        self.parameter_list = []  # types of parameters, respectively
         if declaration_mode == DeclarationMode.Name:
             self.address = first_empty_data
             first_empty_data += 4
@@ -57,7 +59,7 @@ class SymbolTableEntry():
 
 
 declaration_mode = DeclarationMode.Disabled
-symbol_list : list[SymbolTableEntry] = []
+symbol_list: list[SymbolTableEntry] = []
 
 
 ## FUNCTIONS
@@ -305,9 +307,8 @@ def write_error_with_prompt(prompt: str, line_num=None):
     if line_num is None:
         line_num = line_number
     write_to_file(ERROR_FILE, last_error_line_number,
-                   '(' + build_string_from_buffer() + ', ' + prompt + ') ', line_num)
+                  '(' + build_string_from_buffer() + ', ' + prompt + ') ', line_num)
     last_error_line_number = line_num
-
 
 
 def report_invalid_number():
@@ -340,7 +341,7 @@ def add_number_token():
 def add_id_kw_token():
     global token_lexeme, token_type
     token_lexeme = build_string_from_buffer()
-    if declaration_mode == DeclarationMode.Name:    
+    if declaration_mode == DeclarationMode.Name:
         if token_lexeme == 'void':
             symbol_list[-1].id_type = IdentifierType.void
         elif token_lexeme == 'int':
@@ -355,7 +356,6 @@ def add_id_kw_token():
         elif token_lexeme not in KEYWORDS:
             symbol_list[-1].lexeme = token_lexeme
 
-        
     write_token()
 
 
@@ -364,11 +364,11 @@ def add_symbol_token():
     token_lexeme = build_string_from_buffer()
     token_type = 'SYMBOL'
     if token_lexeme == '[' and \
-        declaration_mode in [DeclarationMode.Name, DeclarationMode.Parameter]:
-            symbol_list[-1].id_type = IdentifierType.int_array
-            if declaration_mode == DeclarationMode.Parameter:
-                symbol_list[scope_stack[-1] - 1].parameter_list[-1] = IdentifierType.int_array
-            
+            declaration_mode in [DeclarationMode.Name, DeclarationMode.Parameter]:
+        symbol_list[-1].id_type = IdentifierType.int_array
+        if declaration_mode == DeclarationMode.Parameter:
+            symbol_list[scope_stack[-1] - 1].parameter_list[-1] = IdentifierType.int_array
+
     write_token()
 
 
@@ -383,10 +383,12 @@ def init_symbol_table():
 def get_current_line():
     return line_number
 
+
 def get_last_token():
     return last_token_type, last_token_lexem
 
-def symbol_table_lookup(lexeme : str):
+
+def symbol_table_lookup(lexeme: str):
     """
     Looks up the symbol table for an ID with lexeme
     equal to LEXEME. Returns its index if it is found, -1 otherwise
@@ -403,23 +405,27 @@ def symbol_table_lookup(lexeme : str):
     for i in range(len(symbol_list)):
         if symbol_list[i].lexeme == lexeme:
             return i
-        
+
     return -1
+
 
 # Symbol table management
 def set_declaration_mode(mode):
     global declaration_mode
     declaration_mode = mode
 
+
 def start_declaration():
     set_declaration_mode(DeclarationMode.Name)
     SymbolTableEntry()
-    
+
 
 def start_params():
     set_declaration_mode(DeclarationMode.Parameter)
     symbol_list[-1].is_function = True
     scope_stack.append(len(symbol_list))
 
+
 def end_scope():
+    global symbol_list
     symbol_list = symbol_list[:scope_stack[-1]]
