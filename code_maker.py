@@ -86,6 +86,7 @@ def assign():
     t = semantic_stack.pop()
     a = semantic_stack.pop()
     generate_code('ASSIGN', t, a)
+    semantic_stack.append(t)
 
 def assign_arr():
     val = semantic_stack.pop()
@@ -94,6 +95,10 @@ def assign_arr():
     generate_code('MULT', ind, '#4', ind)
     generate_code('ADD', '#' + str(a), ind, ind)
     generate_code('ASSIGN', val, '@' + str(ind))
+    semantic_stack.append(val)
+
+def end_expression():
+    semantic_stack.pop()
 
 def do_op():
     t2 = semantic_stack.pop()
@@ -158,6 +163,7 @@ def end_repeat():
 def call_output():
     a = semantic_stack.pop()
     generate_code('PRINT', a)
+    semantic_stack.append('void')
 
 def start_declaration():
     scanner.start_declaration()
