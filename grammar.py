@@ -102,9 +102,9 @@ grammar: List[str] = ["Program -> Declaration-list $",
                       "Declaration-list -> Declaration Declaration-list | epsilon",
                       "Declaration -> #start-declaration Declaration-initial Declaration-prime",
                       "Declaration-initial -> Type-specifier ID",
-                      "Declaration-prime -> Fun-declaration-prime | Var-declaration-prime #end-declaration",
-                      "Var-declaration-prime -> ; | [ NUM ] ;",
-                      "Fun-declaration-prime -> #start-params ( Params ) #end-declaration Compound-stmt #end-scope",
+                      "Declaration-prime -> Fun-declaration-prime | Var-declaration-prime",
+                      "Var-declaration-prime -> #end-declaration ; | [ NUM ] #end-declaration ;",
+                      "Fun-declaration-prime -> #start-params ( Params #end-declaration ) Compound-stmt #end-scope",
                       "Type-specifier -> int | void",
                       "Params -> int ID Param-prime Param-list | void",
                       "Param-list -> , Param Param-list | epsilon",
@@ -113,32 +113,32 @@ grammar: List[str] = ["Program -> Declaration-list $",
                       "Compound-stmt -> { Declaration-list Statement-list }",
                       "Statement-list -> Statement Statement-list | epsilon",
                       "Statement -> Expression-stmt | Compound-stmt | Selection-stmt | Iteration-stmt | Return-stmt",
-                      "Expression-stmt -> Expression ; | #break break ; | ;",
+                      "Expression-stmt -> Expression #end-expression ; | #brk break ; | ;",
                       "Selection-stmt -> if ( Expression ) #make-patch Statement #make-patch else Statement #end-if",
-                      "Iteration-stmt -> repeat #start-repeat Statement until ( Expression ) #end-repeat",
+                      "Iteration-stmt -> repeat #start-repeat Statement until ( Expression #end-repeat )",
                       "Return-stmt -> return Return-stmt-prime",
                       "Return-stmt-prime -> ; | Expression ;",
-                      "Expression -> Simple-expression-zegond | ID #pid B",
+                      "Expression -> Simple-expression-zegond | #pid ID B",
                       "B -> = Expression #assign | [ Expression ] H | #temp-exch Simple-expression-prime",
                       "H -> = Expression #assign-arr | #eval-ind-orig G D C",
                       "Simple-expression-zegond -> Additive-expression-zegond C",
                       "Simple-expression-prime -> Additive-expression-prime C",
                       "C -> Relop Additive-expression #do-op | epsilon",
-                      "Relop -> < | ==",
+                      "Relop -> #pless < | #peq ==",
                       "Additive-expression -> Term D",
                       "Additive-expression-prime -> Term-prime D",
                       "Additive-expression-zegond -> Term-zegond D",
-                      "D -> Addop Term D | epsilon",
+                      "D -> Addop Term #do-op D | epsilon",
                       "Addop -> #pplus + | #pminus -",
                       "Term -> Factor G",
                       "Term-prime -> Factor-prime G",
                       "Term-zegond -> Factor-zegond G",
-                      "G -> * Factor #do-mult-op G | epsilon",
-                      "Factor -> ( Expression ) | ID #ptoken Var-call-prime | NUM #ptoken",
+                      "G -> #ptimes * Factor #do-op G | epsilon",
+                      "Factor -> ( Expression ) | #pid ID Var-call-prime | #ptoken NUM",
                       "Var-call-prime -> ( Args ) | Var-prime",
-                      "Var-prime -> [ Expression ] #eval-ind | epsilon",
+                      "Var-prime -> [ Expression #eval-ind-orig ] | #temp-exch epsilon",
                       "Factor-prime -> ( Args ) #call-output | epsilon",
-                      "Factor-zegond -> ( Expression ) | NUM #ptoken",
+                      "Factor-zegond -> ( Expression ) | #ptoken NUM",
                       "Args -> Arg-list | epsilon",
                       "Arg-list -> Expression Arg-list-prime",
                       "Arg-list-prime -> , Expression Arg-list-prime | epsilon"]
@@ -164,11 +164,12 @@ def get_productions(non_terminal: str) -> str:
     for p in grammar:
         if p.split()[0] == non_terminal:
             return p
+    return ''
 
 
 def find_first(symbol: str, productions: Dict[str, List[List[str]]]) -> Set[str]:
     """
-    Find first set of str symbol give the production rules
+    Find first set of str symbol given the production rules
     :param symbol:
     :param productions:
     :return:

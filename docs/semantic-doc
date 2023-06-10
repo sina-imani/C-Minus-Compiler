@@ -20,7 +20,7 @@ pop()
 push(t)
 
 #pid		(push id)
-type, index = get_next_token()
+type, index = scanner.get_last_token()
 push(SYMBOL_TABLE[index].address)
 
 #pplus		(push the + sign)
@@ -46,7 +46,7 @@ ss:	..., &a, t1, t2
 	...
 t2, t1, &a = pop(3)
 PB[i++] = (MULT, t1, #4, t1)
-PB[i++] = (ADD, t1, &a, t1)
+PB[i++] = (ADD, t1, #&a, t1)
 PB[i++] = (ASSIGN, t2, @t1)
 
 #do_op	(do the operation)
@@ -127,19 +127,23 @@ PB[a1] = (JPF, t, a2+1)
 
 #start_repeat
 ss: ...
-	..., i, 0
+	..., i
+bs:	...
+	..., 0
 push(i)
-push(0)
+bs.push(0)
 
 #break
-ss:	..., i, b_1, ..., b_n, n
+bs:	..., i, b_1, ..., b_n, n
 	..., i, b_1, ..., b_n, b_n+1, n+1
-n = pop()
-push(i++)
-push(n+1)
+n = bs.pop()
+bs.push(i++)
+bs.push(n+1)
 
 #end_repeat
-ss:	..., 0, b1=1, b2=3, 2, t	(see the schematic)
+ss:	..., 0, t	(see the schematic)
+	...
+bs:	..., b1=1, b2=3, 2
 	...
 schematic:
 0.	code of statement
@@ -152,9 +156,9 @@ schematic:
 7.
 
 t = pop()
-break_cnt = pop()
+break_cnt = bs.pop()
 for j in range(break_cnt):
-	break_addr = pop()
+	break_addr = bs.pop()
 	PB[break_addr] = (JP, i+1)
 a = pop()
 PB[i++] = (JPF, t, a)
@@ -177,3 +181,19 @@ scanner.set_declaration_mode(DISABLE)
 
 #end_scope
 scanner.end_scope()
+
+
+repeat {
+	repeat {
+		if (a) {
+			break;
+		} else {
+			if  (b) {
+				break;
+			} 
+			else {
+			}
+		}
+	}until(c1)
+	break;
+}until(c2)

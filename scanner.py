@@ -1,8 +1,6 @@
 # IAWT
 import enum
 
-import code_maker
-
 ## GLOBAL VARIABLES
 
 SILENT_MODE = True  # Silent mode turned on means that no lexical error will be reported in the corresponding file
@@ -30,7 +28,10 @@ last_error_line_number = 0
 declaration_mode = None
 last_kw = None
 scope_stack = []
-first_empty_data = code_maker.MAX_CODE_LENGTH
+MAX_CODE_LENGTH = 100
+MAX_DATA_LENGTH = 400
+TEMP_OFFSET = MAX_CODE_LENGTH + MAX_DATA_LENGTH
+first_empty_data = MAX_CODE_LENGTH
 
 
 ## CLASSES AND ENUMS
@@ -49,13 +50,14 @@ class IdentifierType(enum.Enum):
 class SymbolTableEntry:
     def __init__(self):
         global first_empty_data
-        self.lexeme = None
-        self.id_type = None
+        self.lexeme = ''
+        self.id_type = IdentifierType.void
         self.is_function = False
         self.parameter_list = []  # types of parameters, respectively
         if declaration_mode == DeclarationMode.Name:
             self.address = first_empty_data
             first_empty_data += 4
+        self.array_length = 0
         symbol_list.append(self)
 
 
@@ -333,16 +335,21 @@ def report_unclosed_comment(command_start_line):
 
 
 def add_number_token():
-    global token_lexeme, token_type
+    global token_lexeme, token_type, first_empty_data
     token_lexeme = build_string_from_buffer()
     token_type = 'NUM'
+    if declaration_mode == DeclarationMode.Name:
+        if symbol_list[-1].id_type == IdentifierType.int_array:
+            symbol_list[-1].array_length = int(token_lexeme)
+            first_empty_data += 4 * (int(token_lexeme) - 1)
     write_token()
 
 
 def add_id_kw_token():
     global token_lexeme, token_type
     token_lexeme = build_string_from_buffer()
-    if declaration_mode == DeclarationMode.Name:
+    token_type = 'KEYWORD' if token_lexeme in KEYWORDS else 'ID'
+    if declaration_mode == DeclarationMode.Name:    
         if token_lexeme == 'void':
             symbol_list[-1].id_type = IdentifierType.void
         elif token_lexeme == 'int':
@@ -418,8 +425,14 @@ def set_declaration_mode(mode):
 
 def start_declaration():
     set_declaration_mode(DeclarationMode.Name)
-    SymbolTableEntry()
-
+    new_entry = SymbolTableEntry()
+    if last_token_lexem == 'int':
+        new_entry.id_type = IdentifierType.int
+    elif last_token_lexem == 'void':
+        new_entry.id_type = IdentifierType.void
+    else:
+        raise Exception("Inappropriate type specification")
+    
 
 def start_params():
     set_declaration_mode(DeclarationMode.Parameter)
