@@ -55,6 +55,7 @@ class SymbolTableEntry():
         if declaration_mode == DeclarationMode.Name:
             self.address = first_empty_data
             first_empty_data += 4
+        self.array_length = 0
         symbol_list.append(self)
 
 
@@ -333,9 +334,13 @@ def report_unclosed_comment(command_start_line):
 
 
 def add_number_token():
-    global token_lexeme, token_type
+    global token_lexeme, token_type, first_empty_data
     token_lexeme = build_string_from_buffer()
     token_type = 'NUM'
+    if declaration_mode == DeclarationMode.Name:
+        if symbol_list[-1].id_type == IdentifierType.int_array:
+            symbol_list[-1].array_length = int(token_lexeme)
+            first_empty_data += 4 * (int(token_lexeme) - 1)
     write_token()
 
 

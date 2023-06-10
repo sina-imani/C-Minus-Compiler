@@ -78,6 +78,9 @@ def pless():
 def peq():
     semantic_stack.append('EQ')
 
+def ptimes():
+    semantic_stack.append('MULT')
+
 def assign():
     t = semantic_stack.pop()
     a = semantic_stack.pop()
@@ -88,7 +91,7 @@ def assign_arr():
     ind = semantic_stack.pop()
     a  = semantic_stack.pop()
     generate_code('MULT', ind, '#4', ind)
-    generate_code('ADD', a, ind, ind)
+    generate_code('ADD', '#' + str(a), ind, ind)
     generate_code('ASSIGN', val, '@' + str(ind))
 
 def do_op():
@@ -116,7 +119,7 @@ def eval_ind_orig():
     t = semantic_stack.pop()
     a = semantic_stack.pop()
     generate_code('MULT', t, '#4', t)
-    generate_code('ADD', a, t, t)
+    generate_code('ADD', '#' + str(a), t, t)
     generate_code('ASSIGN', '@' + str(t), t)
     semantic_stack.append(t)
 
@@ -129,7 +132,7 @@ def end_if():
     a1 = semantic_stack.pop()
     t = semantic_stack.pop()
     PB[a2] = f'(JP, {len(PB)},  ,   )'
-    PB[a1] = f'(JPF, {t}, {a2+1},   )'
+    PB[a1] = f'(JPF, {t}, {a2 + 1},   )'
 
 def start_repeat():
     semantic_stack.append(len(PB))
