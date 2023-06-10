@@ -28,8 +28,8 @@ last_error_line_number = 0
 declaration_mode = None
 last_kw = None
 scope_stack = []
-MAX_CODE_LENGTH = 300
-MAX_DATA_LENGTH = 1600
+MAX_CODE_LENGTH = 100
+MAX_DATA_LENGTH = 400
 TEMP_OFFSET = MAX_CODE_LENGTH + MAX_DATA_LENGTH
 first_empty_data = MAX_CODE_LENGTH
 

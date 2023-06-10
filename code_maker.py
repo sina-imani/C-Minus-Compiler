@@ -7,6 +7,7 @@ import scanner
 PB = None
 
 semantic_stack = []
+break_stack = []
 last_temp = scanner.TEMP_OFFSET
 PB = []
 
@@ -131,28 +132,28 @@ def end_if():
     a2 = semantic_stack.pop()
     a1 = semantic_stack.pop()
     t = semantic_stack.pop()
-    PB[a2] = f'(JP, {len(PB)},  ,   )'
-    PB[a1] = f'(JPF, {t}, {a2 + 1},   )'
+    PB[a2] = f'{a2}\t(JP, {len(PB)},  ,   )'
+    PB[a1] = f'{a1}\t(JPF, {t}, {a2 + 1},   )'
 
 def start_repeat():
     semantic_stack.append(len(PB))
-    semantic_stack.append(0)
+    break_stack.append(0)
 
 def brk():
-    n = semantic_stack.pop()
-    semantic_stack.append(len(PB))
-    semantic_stack.append(n + 1)
+    n = break_stack.pop()
+    break_stack.append(len(PB))
+    break_stack.append(n + 1)
     PB.append('')
 
 
 def end_repeat():
     t = semantic_stack.pop()
-    break_cnt = semantic_stack.pop()
-    for _ in range(break_cnt):
-        break_addr = semantic_stack.pop()
-        PB[break_addr] = f'(JP, {len(PB) + 1},  ,   )'
     a = semantic_stack.pop()
     generate_code('JPF', t, a)
+    break_cnt = break_stack.pop()
+    for _ in range(break_cnt):
+        break_addr = break_stack.pop()
+        PB[break_addr] = f'{break_addr}\t(JP, {len(PB)},  ,   )'
 
 def call_output():
     a = semantic_stack.pop()
