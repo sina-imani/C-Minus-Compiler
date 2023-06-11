@@ -158,6 +158,9 @@ def start_repeat():
 
 
 def brk():
+    if not break_stack:
+        report_semantic_error(scanner.line_number, "No 'repeat ... until' found for 'break'")
+        return
     n = break_stack.pop()
     break_stack.append(len(PB))
     break_stack.append(n + 1)
@@ -173,10 +176,26 @@ def end_repeat():
         break_addr = break_stack.pop()
         PB[break_addr] = f'{break_addr}\t(JP, {len(PB)},  ,   )'
 
-def call_output():
-    t = semantic_stack.pop()
-    generate_code('PRINT', t)
-    semantic_stack.append('void')
+def start_args():
+    semantic_stack.append(0)
+
+def new_arg():
+    last_arg = semantic_stack.pop()
+    n = semantic_stack.pop()
+    semantic_stack.append(last_arg)
+    semantic_stack.append(n + 1)
+
+def call():
+    n = semantic_stack.pop()
+    for i in range(n):
+        semantic_stack.pop()
+    f_index = semantic_stack.pop()
+    f = symbol_list[f_index]
+    if f.is_function is False:
+        raise Exception(f'code maker : expected {f.lexeme} to be function but it was not')
+    if len(f.parameter_list) != n:
+        report_semantic_error(scanner.line_number, f'Mismatch in numbers of arguments of {f.lexeme}')
+    semantic_stack.append(f.id_type)
 
 def check_void():
     if symbol_list[-1].id_type == Type.void and not symbol_list[-1].is_function:

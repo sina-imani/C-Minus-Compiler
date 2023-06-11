@@ -135,13 +135,13 @@ grammar: List[str] = ["Program -> Declaration-list $",
                       "Term-zegond -> Factor-zegond G",
                       "G -> #ptimes * Factor #do-op G | epsilon",
                       "Factor -> ( Expression ) | #pid ID Var-call-prime | #pnum NUM",
-                      "Var-call-prime -> ( Args ) | Var-prime",
+                      "Var-call-prime -> #start-args ( Args ) #call | Var-prime",
                       "Var-prime -> [ Expression #eval-ind-orig ] | #temp-exch epsilon",
-                      "Factor-prime -> ( Args ) #call-output | epsilon",
+                      "Factor-prime -> #start-args ( Args ) #call | epsilon",
                       "Factor-zegond -> ( Expression ) | #pnum NUM",
                       "Args -> Arg-list | epsilon",
-                      "Arg-list -> Expression Arg-list-prime",
-                      "Arg-list-prime -> , Expression Arg-list-prime | epsilon"]
+                      "Arg-list -> Expression #new-arg Arg-list-prime",
+                      "Arg-list-prime -> , Expression #new-arg Arg-list-prime | epsilon"]
 
 terminals: Set[str] = {
     ';', ':', ',', '[', ']', '(', ')', '{', '}', '+', '-', '*', '=', '<', '==',

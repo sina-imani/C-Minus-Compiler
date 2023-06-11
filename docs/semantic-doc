@@ -170,6 +170,38 @@ ss:	..., a
 PB[i++] = (PRINT, pop())
 
 
+#start_args
+ss:	...
+	..., 0
+push(0)
+
+#new_arg
+ss:	..., arg_1, arg_2, ..., arg_n, n, arg_n+1
+	..., arg_1, arg_2, ..., arg_n, arg_n+1, n+1
+	last_arg = pop()
+	n = pop()
+	push(last_arg)
+	push(n + 1)
+
+#call
+ss:	..., f_index, arg_1, arg_2, ..., arg_n, n
+	..., f_output
+
+n = pop()
+parameters = []
+for j in range(n-1, -1, -1):
+	parameters[j] = pop()
+f_index = pop()
+f = symbol_list[f_index]
+if len(f.parameters) != n:
+	report_semantic_error()
+elif f == OUTPUT_FUNCTION:
+	generate_code(print, parameters[0])
+push(f.output.type)
+
+
+
+
 #start_declaration		
 scanner.start_declaration()
 
