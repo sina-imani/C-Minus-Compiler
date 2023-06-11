@@ -1,4 +1,5 @@
 # IAWT
+
 import enum
 
 ## GLOBAL VARIABLES
@@ -25,11 +26,11 @@ last_token_lexem = ''
 last_token_type = ''
 last_token_line_number = 0
 last_error_line_number = 0
-last_type_line_number : int
+last_type_line_number = 0
 last_param_type : str
 declaration_mode = None
 last_kw = None
-scope_stack = []
+scope_stack = [0]
 MAX_CODE_LENGTH = 100
 MAX_DATA_LENGTH = 400
 TEMP_OFFSET = MAX_CODE_LENGTH + MAX_DATA_LENGTH
@@ -46,13 +47,15 @@ class DeclarationMode(enum.Enum):
 class IdentifierType(enum.Enum):
     void = 0
     int = 1
-    int_array = 2
+    array = 2
 
 
 class SymbolTableEntry:
     def __init__(self):
         global first_empty_data
         self.lexeme = ''
+        self.address = 0
+        self.last_occurance : int
         self.id_type = IdentifierType.void
         self.is_function = False
         self.parameter_list = []  # types of parameters, respectively
@@ -341,7 +344,7 @@ def add_number_token():
     token_lexeme = build_string_from_buffer()
     token_type = 'NUM'
     if declaration_mode == DeclarationMode.Name:
-        if symbol_list[-1].id_type == IdentifierType.int_array:
+        if symbol_list[-1].id_type == IdentifierType.array:
             symbol_list[-1].array_length = int(token_lexeme)
             first_empty_data += 4 * (int(token_lexeme) - 1)
     write_token()
@@ -351,13 +354,13 @@ def add_id_kw_token():
     global token_lexeme, token_type, last_type_line_number, last_param_type
     token_lexeme = build_string_from_buffer()
     token_type = 'KEYWORD' if token_lexeme in KEYWORDS else 'ID'
+    if token_lexeme in ['int', 'void']:
+        last_type_line_number = line_number
     if declaration_mode == DeclarationMode.Name:    
         if token_lexeme == 'void':
             symbol_list[-1].id_type = IdentifierType.void
-            last_type_line_number = line_number
         elif token_lexeme == 'int':
             symbol_list[-1].id_type = IdentifierType.int
-            last_type_line_number = line_number
         elif not token_lexeme in KEYWORDS:
             symbol_list[-1].lexeme = token_lexeme
     elif declaration_mode == DeclarationMode.Parameter:
@@ -367,9 +370,12 @@ def add_id_kw_token():
             new_parameter = SymbolTableEntry()
             new_parameter.id_type = IdentifierType.int if last_param_type == 'int' else IdentifierType.void
             symbol_list[scope_stack[-1] - 1].parameter_list.append(new_parameter.id_type)
-            last_type_line_number = line_number
             symbol_list[-1].lexeme = token_lexeme
-
+    elif token_type == 'ID':
+        token_index = symbol_table_lookup(token_lexeme)
+        if token_index != -1:
+            symbol_list[token_index].last_occurance = line_number
+    
     write_token()
 
 
@@ -380,15 +386,19 @@ def add_symbol_token():
     if token_lexeme == '[' and \
             declaration_mode in [DeclarationMode.Name, DeclarationMode.Parameter]:
         if symbol_list[-1].id_type == IdentifierType.int:
-            symbol_list[-1].id_type = IdentifierType.int_array
+            symbol_list[-1].id_type = IdentifierType.array
         if declaration_mode == DeclarationMode.Parameter:
             if symbol_list[scope_stack[-1] - 1].parameter_list[-1] == IdentifierType.int:
-                symbol_list[scope_stack[-1] - 1].parameter_list[-1] = IdentifierType.int_array
+                symbol_list[scope_stack[-1] - 1].parameter_list[-1] = IdentifierType.array
 
     write_token()
 
 
 def init_symbol_table():
+    dummy_var = SymbolTableEntry()
+    dummy_var.id_type = IdentifierType.int
+    dummy_var.lexeme = ''
+
     output_function = SymbolTableEntry()
     output_function.id_type = IdentifierType.void
     output_function.lexeme = 'output'
@@ -449,5 +459,6 @@ def start_params():
 
 
 def end_scope():
-    global symbol_list
+    global symbol_list, scope_stack
     symbol_list = symbol_list[:scope_stack[-1]]
+    scope_stack.pop()

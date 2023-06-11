@@ -1,7 +1,7 @@
 # IAWT
 
 import scanner
-from scanner import IdentifierType as Type, symbol_list
+from scanner import IdentifierType as Type
 from typing import TextIO
 
 # VARIABLES
@@ -13,10 +13,19 @@ semantic_correctness = True
 semantic_stack = []
 break_stack = []
 last_temp = scanner.TEMP_OFFSET
+last_sem_error_line = 0
 
 
 
 # FUNCTIONS
+def report_semantic_error(lineno, prompt):
+    global semantic_correctness, last_sem_error_line
+    if lineno <= last_sem_error_line:
+        pass # I AM REALLY NOT HAPPY TO WRITE THIS :(
+    last_sem_error_line = lineno
+    semantic_correctness = False
+    SEM_ERROR_FILE.write(f'#{lineno}: Semantic Error! {prompt}.\n')
+
 def next_temp():
     global last_temp
     last_temp += 4
@@ -48,8 +57,13 @@ def pnum():
 
 def temp_exch():
     a_index = semantic_stack.pop()
-    a_entry = symbol_list[a_index]
+    a_line = semantic_stack.pop()
+    a_entry = scanner.symbol_list[a_index]
     if a_entry.is_function:
+        report_semantic_error(a_line, "Type mismatch in operands, Got function instead of int")
+    if a_entry.id_type == Type.array:
+        semantic_stack.append(a_line)
+        semantic_stack.append('array')
         return
     a = a_entry.address
     t = next_temp()
@@ -63,8 +77,9 @@ def pid():
         raise Exception("code maker : last token type expected to be ID, but was " + last_type)
     sym_index = scanner.symbol_table_lookup(last_lexeme)
     if sym_index == -1:
-        report_semantic_error(scanner.line_number, f'{last_lexeme} is not defined')
-        return
+        report_semantic_error(scanner.line_number, f"'{last_lexeme}' is not defined")
+        sym_index = 0
+    semantic_stack.append(scanner.line_number)
     semantic_stack.append(sym_index)
 
 
@@ -87,29 +102,72 @@ def ptimes():
     semantic_stack.append('MULT')
 
 def assign():
+    t_line = 0
     t = semantic_stack.pop()
+    if t == 'array':
+        t_line = semantic_stack.pop()
     a_index = semantic_stack.pop()
-    a = symbol_list[a_index].address
+    a_line = semantic_stack.pop()
+    a_entry = scanner.symbol_list[a_index]
+    if a_entry.id_type != Type.int:
+        report_semantic_error(a_line,
+                              f"Type mismatch in operands, Got {a_entry.id_type.name} instead of int")
+    if a_entry.is_function:
+        report_semantic_error(a_line,
+                              "Type mismatch in operands, Got function instead of int")
+    if t == 'array':
+        report_semantic_error(t_line, "Type mismatch in operands, Got array instead of int")
+        t = 0
+    a = a_entry.address
     generate_code('ASSIGN', t, a)
     semantic_stack.append(t)
 
 def assign_arr():
+    val_line, ind_line = 0, 0
     val = semantic_stack.pop()
+    if val == 'array':
+        val_line = semantic_stack.pop()
     ind = semantic_stack.pop()
+    if ind == 'array':
+        ind_line = semantic_stack.pop()
     a_index = semantic_stack.pop()
-    a = symbol_list[a_index].address
+    a_line = semantic_stack.pop()
+    a_entry = scanner.symbol_list[a_index]
+    if a_entry.id_type != Type.array:
+        report_semantic_error(a_line,
+                              f"Type mismatch in operands, Got {a_entry.id_type.name} instead of array")
+    if a_entry.is_function:
+        report_semantic_error(a_line,
+                              "Type mismatch in operands, Got function instead of array")
+    if ind == 'array':
+        report_semantic_error(ind_line, "Type mismatch in operands, Got array instead of int")
+    if val == 'array':
+        report_semantic_error(val_line, "Type mismatch in operands, Got array instead of int")
+        val = 0
+    a = a_entry.address
     generate_code('MULT', ind, '#4', ind)
     generate_code('ADD', '#' + str(a), ind, ind)
     generate_code('ASSIGN', val, '@' + str(ind))
     semantic_stack.append(val)
 
 def end_expression():
-    semantic_stack.pop()
+    exp = semantic_stack.pop()
+    if exp == 'array':
+        semantic_stack.pop()
 
 def do_op():
+    t1_line, t2_line = 0, 0
     t2 = semantic_stack.pop()
+    if t2 == 'array':
+        t2_line = semantic_stack.pop()
     op = semantic_stack.pop()
     t1 = semantic_stack.pop()
+    if t1 == 'array':
+        t1_line = semantic_stack.pop()
+        report_semantic_error(t1_line, f'Type mismatch in operands, Got array instead of int')
+        t1 = 0
+    if t2 == 'array':
+        report_semantic_error(t2_line, f'Type mismatch in operands, Got array instead of int')
     generate_code(op, t1, t2, t1)
     semantic_stack.append(t1)
 
@@ -130,14 +188,35 @@ def eval_ind():
 
 
 def eval_ind_orig():
+    t_line = 0
     t = semantic_stack.pop()
+    if t == 'array':
+        t_line = semantic_stack.pop()
     a_index = semantic_stack.pop()
-    a = symbol_list[a_index].address
+    a_line = semantic_stack.pop()
+    a_entry = scanner.symbol_list[a_index]
+    if a_entry.id_type != Type.array:
+        report_semantic_error(a_line, 
+                              f"Type mismatch in operands, Got {a_entry.id_type.name} instead of array")
+    if a_entry.is_function:
+        report_semantic_error(a_line, 
+                              "Type mismatch in operands, Got function instead of array")
+    if t == 'array':
+        report_semantic_error(t_line, "Type mismatch in operands, Got array instead of int")
+        t = 0
+    a = a_entry.address
     generate_code('MULT', t, '#4', t)
     generate_code('ADD', '#' + str(a), t, t)
     generate_code('ASSIGN', '@' + str(t), t)
     semantic_stack.append(t)
 
+def expect_temp():
+    t = semantic_stack.pop()
+    if t == 'array':
+        t_line = semantic_stack.pop()
+        report_semantic_error(t_line, f'Type mismatch in operands, Got array instead of int')
+        t = 0
+    semantic_stack.append(t)
 
 def make_patch():
     semantic_stack.append(len(PB))
@@ -168,6 +247,7 @@ def brk():
 
 
 def end_repeat():
+    expect_temp()
     t = semantic_stack.pop()
     a = semantic_stack.pop()
     generate_code('JPF', t, a)
@@ -180,27 +260,43 @@ def start_args():
     semantic_stack.append(0)
 
 def new_arg():
+    last_arg_line = -1
     last_arg = semantic_stack.pop()
+    if last_arg == 'array':
+        last_arg_line = semantic_stack.pop()
     n = semantic_stack.pop()
+    if last_arg == 'array':
+        semantic_stack.append(last_arg_line)
     semantic_stack.append(last_arg)
     semantic_stack.append(n + 1)
 
 def call():
     n = semantic_stack.pop()
-    for i in range(n):
-        semantic_stack.pop()
+    parameters = []
+    for _ in range(n):
+        arg = semantic_stack.pop()
+        if arg == 'array':
+            semantic_stack.pop()
+            parameters.append((Type.array, 'array'))
+        else:
+            parameters.append((Type.int, arg))
     f_index = semantic_stack.pop()
-    f = symbol_list[f_index]
+    _ = semantic_stack.pop() # f_line
+    f = scanner.symbol_list[f_index]
     if f.is_function is False:
         raise Exception(f'code maker : expected {f.lexeme} to be function but it was not')
     if len(f.parameter_list) != n:
-        report_semantic_error(scanner.line_number, f'Mismatch in numbers of arguments of {f.lexeme}')
-    semantic_stack.append(f.id_type)
+        report_semantic_error(scanner.line_number, f"Mismatch in numbers of arguments of '{f.lexeme}'")
+    elif f.lexeme == 'output':
+        generate_code('PRINT', parameters[0][1])
+    if f.id_type == Type.array:
+        semantic_stack.append(scanner.line_number)
+    semantic_stack.append(f.id_type.name)
 
 def check_void():
-    if symbol_list[-1].id_type == Type.void and not symbol_list[-1].is_function:
+    if scanner.symbol_list[-1].id_type == Type.void and not scanner.symbol_list[-1].is_function:
         report_semantic_error(scanner.last_type_line_number, 
-                              f'Illegal type of void for {symbol_list[-1].lexeme}')
+                              f"Illegal type of void for '{scanner.symbol_list[-1].lexeme}'")
 
 def start_declaration():
     scanner.start_declaration()
@@ -214,11 +310,6 @@ def end_declaration():
 
 def end_scope():
     scanner.end_scope()
-
-def report_semantic_error(lineno, prompt):
-    global semantic_correctness
-    semantic_correctness = False
-    SEM_ERROR_FILE.write(f'#{lineno}: Semantic Error! {prompt}\n')
 
 def do_action(action_symbol : str):
     eval(action_symbol[1:].replace('-', '_') + '()')

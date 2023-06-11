@@ -57,15 +57,15 @@ Addop #pminus -
 Term Factor G
 Term_prime Factor_prime G
 Term_zegond Factor_zegond G
-G * Factor #do_mult_op G
+G * Factor #do_op G
 G 
 Factor ( Expression )
-Factor ID #ptoken Var_call_prime
+Factor ID #pid Var_call_prime
 Factor NUM #ptoken
 Var_call_prime ( Args ) 
 Var_call_prime Var_prime
-Var_prime 
-Var_prime [ Expression ] #eval_ind
+Var_prime #temp_exch
+Var_prime [ Expression ] #eval_ind_orig
 Factor_prime ( Args ) #call_output
 Factor_prime 
 Factor_zegond ( Expression )
