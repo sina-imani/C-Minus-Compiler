@@ -1,14 +1,19 @@
 # IAWT
 
 import scanner
+from scanner import IdentifierType as Type, symbol_list
+from typing import TextIO
 
 # VARIABLES
-PB = None
 
+
+PB = []
+SEM_ERROR_FILE : TextIO
+semantic_correctness = True
 semantic_stack = []
 break_stack = []
 last_temp = scanner.TEMP_OFFSET
-PB = []
+
 
 
 # FUNCTIONS
@@ -30,19 +35,12 @@ def generate_code(operation : str, *components):
     new_code += ')'
     PB.append(new_code)
 
-def ptoken():
+def pnum():
     t = next_temp()
     last_type, last_lexeme = scanner.get_last_token()
-    if last_type == 'NUM':
-        generate_code('ASSIGN', '#' + last_lexeme, t)
-    elif last_type == 'ID':
-        sym_index = scanner.symbol_table_lookup(last_lexeme)
-        if sym_index == -1:
-            raise Exception("code maker : cannot find symbol with lexeme " + last_lexeme)
-        sym_address = scanner.symbol_list[sym_index].address
-        generate_code('ASSIGN', sym_address, t)
-    else:
-        raise Exception("code maker : token to be pushed is not either of type NUM nor ID")
+    if last_type != 'NUM':
+        raise Exception(f'code maker : improper type : {last_type} instead of NUM')
+    generate_code('ASSIGN', '#' + last_lexeme, t)
     semantic_stack.append(t)
 
 
@@ -61,11 +59,12 @@ def pid():
         raise Exception("code maker : last token type expected to be ID, but was " + last_type)
     sym_index = scanner.symbol_table_lookup(last_lexeme)
     if sym_index == -1:
-        raise Exception("code maker : cannot find symbol with lexeme " + last_lexeme)
-    if scanner.symbol_list[sym_index].is_function:
+        report_semantic_error(scanner.line_number, f'{last_lexeme} is not defined')
+        return
+    elif symbol_list[sym_index].is_function:
         semantic_stack.append('function')
     else:
-        semantic_stack.append(scanner.symbol_list[sym_index].address)
+        semantic_stack.append(symbol_list[sym_index].address)
 
 
 def pplus():
@@ -183,9 +182,17 @@ def start_params():
 
 def end_declaration():
     scanner.set_declaration_mode(scanner.DeclarationMode.Disabled)
+    if symbol_list[-1].id_type == Type.void and not symbol_list[-1].is_function:
+        report_semantic_error(scanner.last_type_line_number, 
+                              f'Illegal type of void for {symbol_list[-1].lexeme}')
 
 def end_scope():
     scanner.end_scope()
+
+def report_semantic_error(lineno, prompt):
+    global semantic_correctness
+    semantic_correctness = False
+    SEM_ERROR_FILE.write(f'#{lineno}: Semantic Error! {prompt}\n')
 
 def do_action(action_symbol : str):
     eval(action_symbol[1:].replace('-', '_') + '()')

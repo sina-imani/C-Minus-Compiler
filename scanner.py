@@ -25,6 +25,7 @@ last_token_lexem = ''
 last_token_type = ''
 last_token_line_number = 0
 last_error_line_number = 0
+last_type_line_number : int
 declaration_mode = None
 last_kw = None
 scope_stack = []
@@ -300,8 +301,8 @@ def write_to_file(file, last_lineno, content, line_num=None):
 
 def write_token():
     global last_token_line_number
-    # write_to_file(TOKEN_FILE, last_token_line_number,
-    #               '(' + token_type + ', ' + token_lexeme + ') ')
+    write_to_file(TOKEN_FILE, last_token_line_number,
+            '(' + token_type + ', ' + token_lexeme + ') ')
     last_token_line_number = line_number
 
 
@@ -346,21 +347,24 @@ def add_number_token():
 
 
 def add_id_kw_token():
-    global token_lexeme, token_type
+    global token_lexeme, token_type, last_type_line_number
     token_lexeme = build_string_from_buffer()
     token_type = 'KEYWORD' if token_lexeme in KEYWORDS else 'ID'
     if declaration_mode == DeclarationMode.Name:    
         if token_lexeme == 'void':
             symbol_list[-1].id_type = IdentifierType.void
+            last_type_line_number = line_number
         elif token_lexeme == 'int':
             symbol_list[-1].id_type = IdentifierType.int
+            last_type_line_number = line_number
         elif not token_lexeme in KEYWORDS:
             symbol_list[-1].lexeme = token_lexeme
     elif declaration_mode == DeclarationMode.Parameter:
-        if token_lexeme == 'int':
+        if token_lexeme in ['int', 'void']:
             new_parameter = SymbolTableEntry()
-            new_parameter.id_type = IdentifierType.int
+            new_parameter.id_type = IdentifierType.int if token_lexeme == 'int' else IdentifierType.void
             symbol_list[scope_stack[-1] - 1].parameter_list.append(new_parameter.id_type)
+            last_type_line_number = line_number
         elif token_lexeme not in KEYWORDS:
             symbol_list[-1].lexeme = token_lexeme
 
