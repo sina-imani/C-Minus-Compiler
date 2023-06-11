@@ -26,6 +26,7 @@ last_token_type = ''
 last_token_line_number = 0
 last_error_line_number = 0
 last_type_line_number : int
+last_param_type : str
 declaration_mode = None
 last_kw = None
 scope_stack = []
@@ -347,7 +348,7 @@ def add_number_token():
 
 
 def add_id_kw_token():
-    global token_lexeme, token_type, last_type_line_number
+    global token_lexeme, token_type, last_type_line_number, last_param_type
     token_lexeme = build_string_from_buffer()
     token_type = 'KEYWORD' if token_lexeme in KEYWORDS else 'ID'
     if declaration_mode == DeclarationMode.Name:    
@@ -361,11 +362,12 @@ def add_id_kw_token():
             symbol_list[-1].lexeme = token_lexeme
     elif declaration_mode == DeclarationMode.Parameter:
         if token_lexeme in ['int', 'void']:
+            last_param_type = token_lexeme
+        elif token_lexeme not in KEYWORDS:
             new_parameter = SymbolTableEntry()
-            new_parameter.id_type = IdentifierType.int if token_lexeme == 'int' else IdentifierType.void
+            new_parameter.id_type = IdentifierType.int if last_param_type == 'int' else IdentifierType.void
             symbol_list[scope_stack[-1] - 1].parameter_list.append(new_parameter.id_type)
             last_type_line_number = line_number
-        elif token_lexeme not in KEYWORDS:
             symbol_list[-1].lexeme = token_lexeme
 
     write_token()
@@ -377,9 +379,11 @@ def add_symbol_token():
     token_type = 'SYMBOL'
     if token_lexeme == '[' and \
             declaration_mode in [DeclarationMode.Name, DeclarationMode.Parameter]:
-        symbol_list[-1].id_type = IdentifierType.int_array
+        if symbol_list[-1].id_type == IdentifierType.int:
+            symbol_list[-1].id_type = IdentifierType.int_array
         if declaration_mode == DeclarationMode.Parameter:
-            symbol_list[scope_stack[-1] - 1].parameter_list[-1] = IdentifierType.int_array
+            if symbol_list[scope_stack[-1] - 1].parameter_list[-1] == IdentifierType.int:
+                symbol_list[scope_stack[-1] - 1].parameter_list[-1] = IdentifierType.int_array
 
     write_token()
 
