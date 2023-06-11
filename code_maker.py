@@ -172,13 +172,6 @@ def do_op():
     semantic_stack.append(t1)
 
 
-def do_mult():
-    t2 = semantic_stack.pop()
-    t1 = semantic_stack.pop()
-    generate_code('MULT', t1, t2, t1)
-    semantic_stack.append(t1)
-
-
 def eval_ind():
     ind = semantic_stack.pop()
     t = semantic_stack[-1]
@@ -280,15 +273,22 @@ def call():
             parameters.append((Type.array, 'array'))
         else:
             parameters.append((Type.int, arg))
+    parameters.reverse()
     f_index = semantic_stack.pop()
-    _ = semantic_stack.pop() # f_line
+    semantic_stack.pop() # f_line
     f = scanner.symbol_list[f_index]
     if f.is_function is False:
         raise Exception(f'code maker : expected {f.lexeme} to be function but it was not')
     if len(f.parameter_list) != n:
         report_semantic_error(scanner.line_number, f"Mismatch in numbers of arguments of '{f.lexeme}'")
-    elif f.lexeme == 'output':
-        generate_code('PRINT', parameters[0][1])
+    else:
+        for i in range(len(parameters)):
+            if parameters[i][0] != f.parameter_list[i]:
+                report_semantic_error(scanner.line_number, 
+                                      f"Mismatch in type of argument {i + 1} of '{f.lexeme}'. " +
+                                      f"Expected '{f.parameter_list[i].name}' but got '{parameters[i][0].name}' instead")
+        if f.lexeme == 'output':
+            generate_code('PRINT', parameters[0][1])
     if f.id_type == Type.array:
         semantic_stack.append(scanner.line_number)
     semantic_stack.append(f.id_type.name)

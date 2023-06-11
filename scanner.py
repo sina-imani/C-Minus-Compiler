@@ -417,18 +417,20 @@ def get_last_token():
 def symbol_table_lookup(lexeme: str):
     """
     Looks up the symbol table for an ID with lexeme
-    equal to LEXEME. Returns its index if it is found, -1 otherwise
-    Input
+    equal to LEXEME. Returns its index if it is found, -1 otherwise.
+    If several instances are found the index of the last one of them 
+    will be returned.
+    
 
     Args:
         lexeme : The string which is to mach some entry's lexeme in symbol table.
     
     Returns:
-        The index of entry in symbol table with that lexeme, or -1 if no such 
+        The index of the last entry in symbol table with that lexeme, or -1 if no such 
         entry exists.
     """
 
-    for i in range(len(symbol_list)):
+    for i in range(len(symbol_list) - 1, -1, -1):
         if symbol_list[i].lexeme == lexeme:
             return i
 
