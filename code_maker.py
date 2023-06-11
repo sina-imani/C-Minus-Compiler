@@ -23,6 +23,8 @@ def next_temp():
     return last_temp - 4
 
 def generate_code(operation : str, *components):
+    if semantic_correctness is False:
+        return
     new_code = str(len(PB))
     new_code += '\t(' + operation
     for j in range(3):
@@ -45,9 +47,11 @@ def pnum():
 
 
 def temp_exch():
-    a = semantic_stack.pop()
-    if a == 'function':
+    a_index = semantic_stack.pop()
+    a_entry = symbol_list[a_index]
+    if a_entry.is_function:
         return
+    a = a_entry.address
     t = next_temp()
     generate_code('ASSIGN', a, t)
     semantic_stack.append(t)
@@ -61,10 +65,7 @@ def pid():
     if sym_index == -1:
         report_semantic_error(scanner.line_number, f'{last_lexeme} is not defined')
         return
-    elif symbol_list[sym_index].is_function:
-        semantic_stack.append('function')
-    else:
-        semantic_stack.append(symbol_list[sym_index].address)
+    semantic_stack.append(sym_index)
 
 
 def pplus():
@@ -87,14 +88,16 @@ def ptimes():
 
 def assign():
     t = semantic_stack.pop()
-    a = semantic_stack.pop()
+    a_index = semantic_stack.pop()
+    a = symbol_list[a_index].address
     generate_code('ASSIGN', t, a)
     semantic_stack.append(t)
 
 def assign_arr():
     val = semantic_stack.pop()
     ind = semantic_stack.pop()
-    a = semantic_stack.pop()
+    a_index = semantic_stack.pop()
+    a = symbol_list[a_index].address
     generate_code('MULT', ind, '#4', ind)
     generate_code('ADD', '#' + str(a), ind, ind)
     generate_code('ASSIGN', val, '@' + str(ind))
@@ -128,7 +131,8 @@ def eval_ind():
 
 def eval_ind_orig():
     t = semantic_stack.pop()
-    a = semantic_stack.pop()
+    a_index = semantic_stack.pop()
+    a = symbol_list[a_index].address
     generate_code('MULT', t, '#4', t)
     generate_code('ADD', '#' + str(a), t, t)
     generate_code('ASSIGN', '@' + str(t), t)
@@ -170,9 +174,14 @@ def end_repeat():
         PB[break_addr] = f'{break_addr}\t(JP, {len(PB)},  ,   )'
 
 def call_output():
-    a = semantic_stack.pop()
-    generate_code('PRINT', a)
+    t = semantic_stack.pop()
+    generate_code('PRINT', t)
     semantic_stack.append('void')
+
+def check_void():
+    if symbol_list[-1].id_type == Type.void and not symbol_list[-1].is_function:
+        report_semantic_error(scanner.last_type_line_number, 
+                              f'Illegal type of void for {symbol_list[-1].lexeme}')
 
 def start_declaration():
     scanner.start_declaration()
@@ -182,9 +191,7 @@ def start_params():
 
 def end_declaration():
     scanner.set_declaration_mode(scanner.DeclarationMode.Disabled)
-    if symbol_list[-1].id_type == Type.void and not symbol_list[-1].is_function:
-        report_semantic_error(scanner.last_type_line_number, 
-                              f'Illegal type of void for {symbol_list[-1].lexeme}')
+    check_void()
 
 def end_scope():
     scanner.end_scope()
