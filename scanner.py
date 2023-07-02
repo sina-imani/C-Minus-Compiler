@@ -1,6 +1,9 @@
 # IAWT
 
 import enum
+from typing import List
+
+from config import MAX_CODE_LENGTH
 
 ## GLOBAL VARIABLES
 
@@ -27,14 +30,12 @@ last_token_type = ''
 last_token_line_number = 0
 last_error_line_number = 0
 last_type_line_number = 0
-last_param_type : str
-declaration_mode = None
+last_param_type: str
 last_kw = None
 scope_stack = [0]
-MAX_CODE_LENGTH = 100
-MAX_DATA_LENGTH = 400
-TEMP_OFFSET = MAX_CODE_LENGTH + MAX_DATA_LENGTH
-first_empty_data = MAX_CODE_LENGTH
+func_entry_point = {}
+
+next_data_address = MAX_CODE_LENGTH
 
 
 ## CLASSES AND ENUMS
@@ -50,24 +51,24 @@ class IdentifierType(enum.Enum):
     array = 2
 
 
+declaration_mode = DeclarationMode.Disabled
+
+
 class SymbolTableEntry:
     def __init__(self):
-        global first_empty_data
+        global next_data_address
         self.lexeme = ''
         self.address = 0
-        self.last_occurance : int
+        self.last_occurance: int
         self.id_type = IdentifierType.void
         self.is_function = False
         self.parameter_list = []  # types of parameters, respectively
-        if declaration_mode == DeclarationMode.Name:
-            self.address = first_empty_data
-            first_empty_data += 4
+        if declaration_mode == DeclarationMode.Name or declaration_mode == declaration_mode.Parameter:
+            self.address = next_data_address
+            next_data_address += 4
         self.array_length = 0
+        self.temp_begin_address = 0
         symbol_list.append(self)
-
-
-declaration_mode = DeclarationMode.Disabled
-symbol_list: list[SymbolTableEntry] = []
 
 
 ## FUNCTIONS
@@ -306,7 +307,7 @@ def write_to_file(file, last_lineno, content, line_num=None):
 def write_token():
     global last_token_line_number
     write_to_file(TOKEN_FILE, last_token_line_number,
-            '(' + token_type + ', ' + token_lexeme + ') ')
+                  '(' + token_type + ', ' + token_lexeme + ') ')
     last_token_line_number = line_number
 
 
@@ -340,13 +341,13 @@ def report_unclosed_comment(command_start_line):
 
 
 def add_number_token():
-    global token_lexeme, token_type, first_empty_data
+    global token_lexeme, token_type, next_data_address
     token_lexeme = build_string_from_buffer()
     token_type = 'NUM'
     if declaration_mode == DeclarationMode.Name:
         if symbol_list[-1].id_type == IdentifierType.array:
             symbol_list[-1].array_length = int(token_lexeme)
-            first_empty_data += 4 * (int(token_lexeme) - 1)
+            next_data_address += 4 * (int(token_lexeme) - 1)
     write_token()
 
 
@@ -356,7 +357,7 @@ def add_id_kw_token():
     token_type = 'KEYWORD' if token_lexeme in KEYWORDS else 'ID'
     if token_lexeme in ['int', 'void']:
         last_type_line_number = line_number
-    if declaration_mode == DeclarationMode.Name:    
+    if declaration_mode == DeclarationMode.Name:
         if token_lexeme == 'void':
             symbol_list[-1].id_type = IdentifierType.void
         elif token_lexeme == 'int':
@@ -375,7 +376,7 @@ def add_id_kw_token():
         token_index = symbol_table_lookup(token_lexeme)
         if token_index != -1:
             symbol_list[token_index].last_occurance = line_number
-    
+
     write_token()
 
 
@@ -395,15 +396,32 @@ def add_symbol_token():
 
 
 def init_symbol_table():
+    # 0
     dummy_var = SymbolTableEntry()
     dummy_var.id_type = IdentifierType.int
     dummy_var.lexeme = ''
 
+    # output <- 4
     output_function = SymbolTableEntry()
     output_function.id_type = IdentifierType.void
     output_function.lexeme = 'output'
     output_function.is_function = True
     output_function.parameter_list.append(IdentifierType.int)
+
+    # ra <- 8
+    stack_pinter_reg = SymbolTableEntry()
+    stack_pinter_reg.lexeme = 'ra'
+    stack_pinter_reg.is_function = False
+
+    # sp <- 12
+    return_address_reg = SymbolTableEntry()
+    return_address_reg.lexeme = 'sp'
+    return_address_reg.is_function = False
+
+    # v <- 16
+    return_val_reg = SymbolTableEntry()
+    return_val_reg.lexeme = 'v'
+    return_address_reg.is_function = False
 
 
 def get_current_line():
@@ -452,15 +470,24 @@ def start_declaration():
         new_entry.id_type = IdentifierType.void
     else:
         raise Exception("Inappropriate type specification")
-    
 
-def start_params():
+
+def start_params(entry_point):
     set_declaration_mode(DeclarationMode.Parameter)
     symbol_list[-1].is_function = True
     scope_stack.append(len(symbol_list))
+    func_entry_point[symbol_list[-1].lexeme] = entry_point
 
 
 def end_scope():
     global symbol_list, scope_stack
     symbol_list = symbol_list[:scope_stack[-1]]
     scope_stack.pop()
+
+
+def get_current_scope():
+    return symbol_list[scope_stack[-1] - 1]
+
+
+def get_func_entry_point(lexeme):
+    return func_entry_point.get(lexeme)

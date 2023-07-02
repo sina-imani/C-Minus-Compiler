@@ -8,6 +8,7 @@ import code_maker
 try:
     scanner.INPUT_FILE = open('input.txt', 'r')
     code_maker.SEM_ERROR_FILE = open('semantic_errors.txt', 'w')
+    code_parser.TREE_FILE = open('tree_file.txt', 'w')
     inter_code_file = open('output.txt', 'w')
     scanner.init_symbol_table()
 

@@ -64,7 +64,8 @@ follow: Dict[str, Set[str]] = {
     'Param-list': {')'},
     'Param': {',', ')'},
     'Param-prime': {',', ')'},
-    'Compound-stmt': {'void', 'ID', '}', 'return', 'int', 'else', ';', 'if', 'break', 'NUM', 'repeat', 'until', '{', '(', '$'},
+    'Compound-stmt': {'void', 'ID', '}', 'return', 'int', 'else', ';', 'if', 'break', 'NUM', 'repeat', 'until', '{',
+                      '(', '$'},
     'Statement-list': {'}'},
     'Statement': {'ID', '}', 'return', 'else', ';', 'if', 'break', 'NUM', 'repeat', 'until', '{', '('},
     'Expression-stmt': {'ID', '}', 'return', 'else', ';', 'if', 'break', 'NUM', 'repeat', 'until', '{', '('},
@@ -98,7 +99,7 @@ follow: Dict[str, Set[str]] = {
     'Arg-list-prime': {')'}
 }
 
-grammar: List[str] = ["Program -> Declaration-list $",
+grammar: List[str] = ["Program -> #init Declaration-list $",
                       "Declaration-list -> Declaration Declaration-list | epsilon",
                       "Declaration -> #start-declaration Declaration-initial Declaration-prime",
                       "Declaration-initial -> Type-specifier ID",
@@ -114,9 +115,10 @@ grammar: List[str] = ["Program -> Declaration-list $",
                       "Statement-list -> Statement Statement-list | epsilon",
                       "Statement -> Expression-stmt | Compound-stmt | Selection-stmt | Iteration-stmt | Return-stmt",
                       "Expression-stmt -> Expression #end-expression ; | #brk break ; | ;",
-                      "Selection-stmt -> if ( Expression #expect-temp ) #make-patch Statement #make-patch else Statement #end-if",
+                      "Selection-stmt -> if ( Expression #expect-temp ) #make-patch Statement #make-patch else "
+                      "Statement #end-if",
                       "Iteration-stmt -> repeat #start-repeat Statement until ( Expression #end-repeat )",
-                      "Return-stmt -> return Return-stmt-prime",
+                      "Return-stmt -> return Return-stmt-prime #return-call",
                       "Return-stmt-prime -> ; | Expression #end-expression ;",
                       "Expression -> Simple-expression-zegond | #pid ID B",
                       "B -> = Expression #assign | [ Expression ] H | Simple-expression-prime",

@@ -4,11 +4,12 @@ from typing import List, Tuple, Dict, Set
 import scanner as scanner
 from grammar import get_structured_productions, START, is_terminal, first, follow
 from code_maker import do_action
+from anytree import Node, RenderTree
 
 TREE_FILE = None  # file which the tree is written to
 SYNTAX_ERROR_FILE = None  # file which the syntax errors are written to
 
-stack: List[Tuple[str, 'State']] = []  # define stack to track the states in sub calls. #0 edge #1 state
+stack: List[Tuple[str, 'State', 'Node']] = []  # define stack to track the states in sub calls. #0 edge #1 state
 current_position: Tuple[str, 'State']  # the current state of parsing diagram
 state_diagram_dict: Dict[str, 'State'] = {}  # the diagram of each non-terminal
 
@@ -26,16 +27,32 @@ class State:
 
     def add_next_state(self, edge: str, next_state: 'State') -> None:
         self.next_states.append((edge, next_state))
-    
+
     def do_former_routine(self):
         if self.former_action_symbol:
             do_action(self.former_action_symbol)
-    
+
     def do_latter_routine(self):
         if self.latter_action_symbol:
             do_action(self.latter_action_symbol)
 
 
+def add_node(symbol: str, parent: 'Node' = None) -> Node:
+    """
+    This function creates a new node with the given symbol and parent node (if provided).
+    It returns the newly created node.
+    Args:
+        symbol: A string representing the symbol for the new node.
+        parent: An optional 'Node' object representing the parent node of the new node.
+    Returns:
+        A 'Node' object representing the newly created node.
+    """
+    if parent is not None:
+        n = Node(symbol, parent=parent)
+    else:
+        n = Node(symbol)
+
+    return n
 
 
 def create_initial_diagram() -> 'State':
@@ -81,7 +98,7 @@ def create_diagram(non_terminal: str, production_rules: List[List[str]]) -> None
         # Iterate over each edge in the production rule
         for edge in production:
             # Check if this edge is just an action symbol
-            if (edge[0] == '#'):
+            if edge[0] == '#':
                 last_action_symbol = edge
                 continue
 
@@ -94,12 +111,12 @@ def create_diagram(non_terminal: str, production_rules: List[List[str]]) -> None
             # Update the previous state to be the current state
             prev = next_state
             last_action_symbol = ''
+
         prev.latter_action_symbol = last_action_symbol
         last_action_symbol = ''
 
     # Store the resulting state diagram in the 'state_diagram_dict' dictionary
     state_diagram_dict[non_terminal] = start_state
-
 
 
 def jump_forward(n_state: 'State', edge: 'str') -> None:
@@ -119,7 +136,7 @@ def jump_forward(n_state: 'State', edge: 'str') -> None:
 
     # while the current state has no next states, pop the last state from the stack
     while not n_state.next_states:
-        edge, n_state = stack.pop()
+        edge, n_state, _ = stack.pop()
 
     # update the global variable 'current_position' with the new state and edge
     current_position = (edge, n_state)
@@ -136,7 +153,8 @@ def move_forward(n_state: 'State', token: Tuple[str, str]):
         token: A tuple representing the current token being processed, with the first element being the token label
                and the second element being the token value (if applicable).
     """
-    global current_position
+    # Get the parent node for the new node
+    parent: 'Node' = stack[-1][2]
 
     # Format the token label for display purposes
     if token[0] == '$':
@@ -146,15 +164,20 @@ def move_forward(n_state: 'State', token: Tuple[str, str]):
     else:
         format_t = token
 
+    # Add a new node to the state diagram with the given token label and parent node
+    add_node(format_t, parent=parent)
 
-    # Check if the current state is a diagram-terminal
+    global current_position
+
     n_state.do_former_routine()
     p_state = n_state
     p_edge = token[0]
+
+    # if the state is diagram-terminal exit from diagram
     while not p_state.next_states:
         # Pop the last element from the stack
         p_state.do_latter_routine()
-        p_edge, p_state = stack.pop()
+        p_edge, p_state, _ = stack.pop()
 
     # Update the current position to the next non-terminal state in the state diagram
     current_position = (p_edge, p_state)
@@ -170,10 +193,16 @@ def move_in(un_state: 'State', edge: str):
         un_state: A 'State' object representing the current state in the state diagram.
         edge: A string representing the edge label for the new non-terminal state being entered.
     """
+
+    # Get the parent node for the new node
+    parent: 'Node' = stack[-1][2]
+    # Add a new node to the state diagram with the given edge label and parent node
+    n = add_node(edge, parent=parent)
+
     global current_position
 
     # Push the current position onto the stack
-    stack.append((edge, un_state))
+    stack.append((edge, un_state, n))
     un_state.do_former_routine()
 
     # Check if the new non-terminal state has already been created in the state diagram
@@ -371,8 +400,9 @@ def run():
     global current_position
     start_state: 'State' = create_initial_diagram()
     current_position = (START, start_state)
+    root = add_node(START)
 
-    stack.append((START, start_state))
+    stack.append((START, start_state, root))
     token = None
 
     while stack:
@@ -380,3 +410,5 @@ def run():
             token = scanner.get_next_token()
         token = select_next_move(token)
 
+    for pre, fill, node in RenderTree(root):
+        print("%s%s" % (pre, node.name), file=TREE_FILE)
