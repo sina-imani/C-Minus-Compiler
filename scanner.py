@@ -410,18 +410,18 @@ def init_symbol_table():
 
     # ra <- 8
     stack_pinter_reg = SymbolTableEntry()
-    stack_pinter_reg.lexeme = 'ra'
+    stack_pinter_reg.lexeme = '*ra'
     stack_pinter_reg.is_function = False
 
     # sp <- 12
     return_address_reg = SymbolTableEntry()
-    return_address_reg.lexeme = 'sp'
+    return_address_reg.lexeme = '*sp'
     return_address_reg.is_function = False
 
-    # v <- 16
-    return_val_reg = SymbolTableEntry()
-    return_val_reg.lexeme = 'v'
-    return_address_reg.is_function = False
+    # np <- 16
+    pushed_element_number = SymbolTableEntry()
+    pushed_element_number.lexeme = '*np'
+    pushed_element_number.is_function = False
 
 
 def get_current_line():
@@ -486,7 +486,7 @@ def end_scope():
 
 
 def get_current_scope():
-    return symbol_list[scope_stack[-1] - 1]
+    return scope_stack[-1] - 1
 
 
 def get_func_entry_point(lexeme):

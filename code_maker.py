@@ -477,8 +477,10 @@ def call_frame_pop(reg: int):
 
 def create_frame():
     # get caller data
-    caller = scanner.get_current_scope()
+    st_index = scanner.get_current_scope()
+    caller = scanner.symbol_list[st_index]
     caller_params_number = len(caller.parameter_list)
+    reg = 0
 
     # push return address into frame
     ra = 8  # TODO : clean
@@ -492,8 +494,10 @@ def create_frame():
 
 def destroy_frame():
     # get caller data
-    caller = scanner.get_current_scope()
+    st_index = scanner.get_current_scope()
+    caller = scanner.symbol_list[st_index]
     caller_params_number = len(caller.parameter_list)
+    reg = 0
 
     # pop params
     for i in range(caller_params_number, 0, -1):
@@ -556,7 +560,9 @@ def call():
 
     if f.id_type != Type.void:
         v = 16  # TODO clean this
-        semantic_stack.append(v)
+        tmp = next_temp()
+        generate_code('ASSIGN', v, tmp)
+        semantic_stack.append(tmp)
     else:
         semantic_stack.append(f.id_type.name)
 
@@ -594,15 +600,27 @@ def end_declaration():
     check_void()
 
 
+def end_var_declaration():
+    scanner.set_declaration_mode(scanner.DeclarationMode.Disabled)
+    check_void()
+
+    var = scanner.symbol_list[-1]
+    generate_code('ASSIGN', '#0', var.address)
+
+
+
+
 def end_arr_declaration():
     scanner.set_declaration_mode(scanner.DeclarationMode.Disabled)
-    arr: scanner.SymbolTableEntry = scanner.symbol_list[-1]
-    generate_code('ASSIGN', '#' + str(arr.address + 4), arr.address)
     check_void()
+
+    arr = scanner.symbol_list[-1]
+    generate_code('ASSIGN', '#' + str(arr.address + 4), arr.address)
 
 
 def return_call():
-    f = scanner.get_current_scope()
+    f_index = scanner.get_current_scope()
+    f = scanner.symbol_list[f_index]
     if f.lexeme != 'main':
         if f.id_type != Type.void:
             v = 16  # TODO clean this
@@ -612,7 +630,8 @@ def return_call():
 
 
 def end_scope():
-    f = scanner.get_current_scope()
+    f_index = scanner.get_current_scope()
+    f = scanner.symbol_list[f_index]
     if f.id_type != Type.void:
         v = 16  # TODO clean this
         generate_code('ASSIGN', last_temp - 4, 16)
