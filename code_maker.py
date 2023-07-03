@@ -10,6 +10,7 @@ PB: List[str] = []  # program block | each block of program block contains a 3 a
 SEM_ERROR_FILE: TextIO  # file which the semantic errors is written in to it
 
 semantic_correctness = True  # flag to check if program is correct semantically
+global_scope_finish = False
 
 semantic_stack = []  # semantic stack | use for saving temps and creating PB commands
 break_stack = []  # separate break for relop to resolve PB fraction
@@ -289,9 +290,10 @@ def assign_arr():
     if val == 'array':
         report_semantic_error(val_line, "Type mismatch in operands, Got array instead of int")
         val = 0
+
     a = a_entry.address
     generate_code('MULT', ind, '#4', ind)
-    generate_code('ADD', '#' + str(a), ind, ind)
+    generate_code('ADD', str(a), ind, ind)
     generate_code('ASSIGN', val, '@' + str(ind))
     semantic_stack.append(val)
 
@@ -341,8 +343,8 @@ def do_op():
         t1 = 0
     if t2 == 'array':
         report_semantic_error(t2_line, f'Type mismatch in operands, Got array instead of int')
-    generate_code(op, t1, t2, t1)
-    semantic_stack.append(t1)
+    generate_code(op, t1, t2, t2)
+    semantic_stack.append(t2)
 
 
 def eval_ind():
@@ -385,7 +387,7 @@ def eval_ind_orig():
         t = 0
     a = a_entry.address
     generate_code('MULT', t, '#4', t)
-    generate_code('ADD', '#' + str(a), t, t)
+    generate_code('ADD', str(a), t, t)
     generate_code('ASSIGN', '@' + str(t), t)
     semantic_stack.append(t)
 
@@ -477,8 +479,6 @@ def create_frame():
     # get caller data
     caller = scanner.get_current_scope()
     caller_params_number = len(caller.parameter_list)
-    caller_first_temp = caller.temp_begin_address
-    temp_used_number = (last_temp - caller_first_temp) >> 2
 
     # push return address into frame
     ra = 8  # TODO : clean
@@ -486,12 +486,7 @@ def create_frame():
 
     # push params
     for i in range(caller_params_number):
-        reg = caller.address + (i * 4)
-        call_frame_push(reg)
-
-    # push temps
-    for i in range(temp_used_number):
-        reg = caller_first_temp + (i * 4)
+        reg = caller.address + ((i + 1) * 4)
         call_frame_push(reg)
 
 
@@ -499,16 +494,9 @@ def destroy_frame():
     # get caller data
     caller = scanner.get_current_scope()
     caller_params_number = len(caller.parameter_list)
-    caller_first_temp = caller.temp_begin_address
-    temp_used_number = (last_temp - caller_first_temp) >> 2
-
-    # pop temps
-    for i in range(temp_used_number - 1, -1, -1):
-        reg = caller_first_temp + (i * 4)
-        call_frame_pop(reg)
 
     # pop params
-    for i in range(caller_params_number - 1, -1, -1):
+    for i in range(caller_params_number, 0, -1):
         reg = caller.address + (i * 4)
         call_frame_pop(reg)
 
@@ -569,8 +557,8 @@ def call():
     if f.id_type != Type.void:
         v = 16  # TODO clean this
         semantic_stack.append(v)
-
-    semantic_stack.append(f.id_type.name)
+    else:
+        semantic_stack.append(f.id_type.name)
 
 
 def check_void():
@@ -584,16 +572,32 @@ def start_declaration():
 
 
 def start_params():
+    # if it is main then append to PB
+    # otherwise make a patch and turn flag to true
+    global global_scope_finish
+
     scanner.symbol_list[-1].temp_begin_address = last_temp
+
     if scanner.symbol_list[-1].lexeme == 'main':
         patched_line = semantic_stack.pop()
         PB[patched_line] = f'{patched_line}\t(JP, {len(PB)},  ,   )'
+    else:
+        if not global_scope_finish:
+            global_scope_finish = True
+            make_patch()
 
     scanner.start_params(len(PB))
 
 
 def end_declaration():
     scanner.set_declaration_mode(scanner.DeclarationMode.Disabled)
+    check_void()
+
+
+def end_arr_declaration():
+    scanner.set_declaration_mode(scanner.DeclarationMode.Disabled)
+    arr: scanner.SymbolTableEntry = scanner.symbol_list[-1]
+    generate_code('ASSIGN', '#' + str(arr.address + 4), arr.address)
     check_void()
 
 
@@ -622,8 +626,6 @@ def end_scope():
 def init():
     generate_code('ASSIGN', '#0', 8)
     generate_code('ASSIGN', f'#{CALL_FRAME_OFFSET}', 12)
-
-    make_patch()
 
 
 def do_action(action_symbol: str):

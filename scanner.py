@@ -118,7 +118,7 @@ def is_numeric(chr):
 
 
 def is_letter(chr):
-    return 'a' <= chr <= 'z' or 'A' <= chr <= 'Z'
+    return 'a' <= chr <= 'z' or 'A' <= chr <= 'Z' or chr == '_'
 
 
 def is_numeric_letter(chr):
@@ -347,7 +347,7 @@ def add_number_token():
     if declaration_mode == DeclarationMode.Name:
         if symbol_list[-1].id_type == IdentifierType.array:
             symbol_list[-1].array_length = int(token_lexeme)
-            next_data_address += 4 * (int(token_lexeme) - 1)
+            next_data_address += 4 * int(token_lexeme)
     write_token()
 
 
