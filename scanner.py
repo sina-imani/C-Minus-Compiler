@@ -1,7 +1,6 @@
 # IAWT
 
 import enum
-from typing import List
 
 from config import MAX_CODE_LENGTH
 
@@ -67,7 +66,7 @@ class SymbolTableEntry:
             self.address = next_data_address
             next_data_address += 4
         self.array_length = 0
-        self.temp_begin_address = 0
+        self.return_temp_reg = []
         symbol_list.append(self)
 
 
@@ -325,7 +324,7 @@ def report_invalid_number():
 
 
 def report_invalid_input():
-    write_error_with_prompt("Invalid input")
+    write_error_with_prompt("Invalid input.txt")
 
 
 def report_unmatched_comment():
@@ -418,9 +417,9 @@ def init_symbol_table():
     return_address_reg.lexeme = '*sp'
     return_address_reg.is_function = False
 
-    # np <- 16
+    # v <- 16
     pushed_element_number = SymbolTableEntry()
-    pushed_element_number.lexeme = '*np'
+    pushed_element_number.lexeme = '*v'
     pushed_element_number.is_function = False
 
 

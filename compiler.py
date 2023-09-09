@@ -13,7 +13,7 @@ try:
     scanner.init_symbol_table()
 
 except (FileNotFoundError, PermissionError):
-    print('Error while configuring files: No input.txt or insufficient process access')
+    print('Error while configuring files: No input.txt.txt or insufficient process access')
     exit(-1)
 
 code_parser.run()
@@ -21,7 +21,7 @@ code_parser.run()
 try:
     scanner.INPUT_FILE.close()
     if code_maker.semantic_correctness:
-        code_maker.SEM_ERROR_FILE.write('The input program is semantically correct.\n')
+        code_maker.SEM_ERROR_FILE.write('The input.txt program is semantically correct.\n')
         for i in range(len(code_maker.PB) - 1):
             inter_code_file.write(code_maker.PB[i] + '\n')
         if len(code_maker.PB) > 0:

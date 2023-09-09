@@ -1,16 +1,17 @@
 # TODO change the if array
 
-from config import STACK_OFFSET, CALL_FRAME_OFFSET
-import scanner
-from run_frame import Run_Frame
-from scanner import IdentifierType as Type
 from typing import TextIO, List
+
+import scanner
+from config import STACK_OFFSET, CALL_FRAME_OFFSET
+from scanner import IdentifierType as Type
 
 PB: List[str] = []  # program block | each block of program block contains a 3 address command
 SEM_ERROR_FILE: TextIO  # file which the semantic errors is written in to it
 
 semantic_correctness = True  # flag to check if program is correct semantically
 global_scope_finish = False
+in_call_assign = False
 
 semantic_stack = []  # semantic stack | use for saving temps and creating PB commands
 break_stack = []  # separate break for relop to resolve PB fraction
@@ -36,6 +37,16 @@ def next_temp():
     global last_temp
     last_temp += 4
     return last_temp - 4
+
+
+def check_var_call_relativity(src, dst):
+    if str(dst) != '@12' and '#' not in str(src):
+        if str(src) not in str(dst) and str(dst) not in str(src):
+            if '@' in str(src):
+                if int(src[1:]) >= 500:
+                    remove_call_not_related_var(int(src))
+            elif int(src) >= 500:
+                remove_call_not_related_var(int(src))
 
 
 def generate_code(operation: str, *components):
@@ -68,9 +79,8 @@ def generate_code(operation: str, *components):
     new_code += ')'
     PB.append(new_code)
 
-    for c in PB:
-        print(c)
-    print('*' * 10)
+    if operation == 'ASSIGN' and not in_call_assign:
+        check_var_call_relativity(components[0], components[1])
 
 
 def pnum():
@@ -89,6 +99,8 @@ def pnum():
         raise Exception(f'code maker : improper type : {last_type} instead of NUM')
     generate_code('ASSIGN', '#' + last_lexeme, t)
     semantic_stack.append(t)
+
+    save_call_related_var(t)
 
 
 def temp_exch():
@@ -114,10 +126,13 @@ def temp_exch():
         semantic_stack.append(a_line)
         semantic_stack.append('array')
         return
+
     a = a_entry.address
     t = next_temp()
     generate_code('ASSIGN', a, t)
     semantic_stack.append(t)
+
+    save_call_related_var(t)
 
 
 def pid():
@@ -146,7 +161,7 @@ def pplus():
     """
     Adds an 'ADD' operation to the semantic stack.
 
-    This function is called when the parser encounters a + operation in the input.
+    This function is called when the parser encounters a + operation in the input.txt.
     It appends the 'ADD' operation to the semantic stack.
 
     Returns:
@@ -159,7 +174,7 @@ def pminus():
     """
     Adds a 'SUB' operation to the semantic stack.
 
-    This function is called when the parser encounters a - operation in the input.
+    This function is called when the parser encounters a - operation in the input.txt.
     It appends the 'SUB' operation to the semantic stack.
 
     Returns:
@@ -172,7 +187,7 @@ def pless():
     """
     Adds an 'LT' operation to the semantic stack.
 
-    This function is called when the parser encounters a < operation in the input.
+    This function is called when the parser encounters a < operation in the input.txt.
     It appends the 'LT' operation to the semantic stack.
 
     Returns:
@@ -185,7 +200,7 @@ def peq():
     """
     Adds an 'EQ' operation to the semantic stack.
 
-    This function is called when the parser encounters a = operation in the input.
+    This function is called when the parser encounters a = operation in the input.txt.
     It appends the 'EQ' operation to the semantic stack.
 
     Returns:
@@ -198,7 +213,7 @@ def ptimes():
     """
     Adds a 'MULT' operation to the semantic stack.
 
-    This function is called when the parser encounters a * operation in the input.
+    This function is called when the parser encounters a * operation in the input.txt.
     It appends the 'MULT' operation to the semantic stack.
 
     Returns:
@@ -491,6 +506,10 @@ def create_frame():
         reg = caller.address + ((i + 1) * 4)
         call_frame_push(reg)
 
+    # push return temp reg
+    for reg in caller.return_temp_reg:
+        call_frame_push(reg)
+
 
 def destroy_frame():
     # get caller data
@@ -498,6 +517,10 @@ def destroy_frame():
     caller = scanner.symbol_list[st_index]
     caller_params_number = len(caller.parameter_list)
     reg = 0
+
+    # pop return temp reg
+    for reg in caller.return_temp_reg[::-1]:
+        call_frame_pop(reg)
 
     # pop params
     for i in range(caller_params_number, 0, -1):
@@ -515,6 +538,11 @@ def call_set_params(parameters, callee_func_address):
             generate_code('ASSIGN', str(parameters[i][1]), callee_func_address + ((i + 1) << 2))
         else:
             generate_code('ASSIGN', str(parameters[i][1]), callee_func_address + ((i + 1) << 2))
+
+
+def default_assign_callee_return_temp(callee):
+    for reg in callee.return_temp_reg:
+        generate_code('ASSIGN', '#0', reg)
 
 
 def call():
@@ -548,12 +576,16 @@ def call():
         if f.lexeme == 'output':
             generate_code('PRINT', parameters[0][1])
         else:
+            global in_call_assign
+            in_call_assign = True
             create_frame()
             call_set_params(parameters, f.address)
+            default_assign_callee_return_temp(f)
             ra = 8  # TODO clean code
-            generate_code('ASSIGN', f'#{len(PB) + 2}', 8)
+            generate_code('ASSIGN', f'#{len(PB) + 2}', ra)
             generate_code('JP', scanner.get_func_entry_point(f.lexeme))
             destroy_frame()
+            in_call_assign = False
 
     if f.id_type == Type.array:
         semantic_stack.append(scanner.line_number)
@@ -563,8 +595,28 @@ def call():
         tmp = next_temp()
         generate_code('ASSIGN', v, tmp)
         semantic_stack.append(tmp)
+
+        save_call_related_var(tmp)
     else:
         semantic_stack.append(f.id_type.name)
+
+
+def remove_call_not_related_var(tmp):
+    f_index = scanner.get_current_scope()  # get caller
+    if f_index != -1:
+        f = scanner.symbol_list[f_index]
+        ls = f.return_temp_reg
+        if tmp in ls:
+            ls.remove(tmp)
+
+
+def save_call_related_var(tmp):
+    f_index = scanner.get_current_scope()  # get caller
+    if f_index != -1:
+        f = scanner.symbol_list[f_index]
+        ls = f.return_temp_reg
+        if tmp not in ls:
+            ls.append(tmp)
 
 
 def check_void():
@@ -581,8 +633,6 @@ def start_params():
     # if it is main then append to PB
     # otherwise make a patch and turn flag to true
     global global_scope_finish
-
-    scanner.symbol_list[-1].temp_begin_address = last_temp
 
     if scanner.symbol_list[-1].lexeme == 'main':
         patched_line = semantic_stack.pop()
@@ -607,7 +657,7 @@ def end_var_declaration():
     var = scanner.symbol_list[-1]
     generate_code('ASSIGN', '#0', var.address)
 
-
+    save_call_related_var(var.address)
 
 
 def end_arr_declaration():
@@ -617,6 +667,8 @@ def end_arr_declaration():
     arr = scanner.symbol_list[-1]
     generate_code('ASSIGN', '#' + str(arr.address + 4), arr.address)
 
+    save_call_related_var(arr.address)
+
 
 def return_call():
     f_index = scanner.get_current_scope()
@@ -624,7 +676,7 @@ def return_call():
     if f.lexeme != 'main':
         if f.id_type != Type.void:
             v = 16  # TODO clean this
-            generate_code('ASSIGN', last_temp - 4, 16)
+            generate_code('ASSIGN', last_temp - 4, v)
 
     generate_code('JP', '@8')
 
@@ -634,7 +686,7 @@ def end_scope():
     f = scanner.symbol_list[f_index]
     if f.id_type != Type.void:
         v = 16  # TODO clean this
-        generate_code('ASSIGN', last_temp - 4, 16)
+        generate_code('ASSIGN', last_temp - 4, v)
 
     if f.lexeme != 'main':
         generate_code('JP', '@8')
